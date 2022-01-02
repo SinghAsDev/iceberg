@@ -89,54 +89,50 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
     MetricsConfig metricsConfig = MetricsConfig.forTable(table);
 
     try {
-      switch (dataFileFormat) {
-        case AVRO:
-          Avro.DataWriteBuilder avroBuilder = Avro.writeData(outputFile)
-              .schema(dataSchema)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(dataSortOrder)
-              .overwrite();
+      if (dataFileFormat.equals(FileFormat.AVRO)) {
+        Avro.DataWriteBuilder avroBuilder = Avro.writeData(outputFile)
+            .schema(dataSchema)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(dataSortOrder)
+            .overwrite();
 
-          configureDataWrite(avroBuilder);
+        configureDataWrite(avroBuilder);
 
-          return avroBuilder.build();
+        return avroBuilder.build();
+      } else if (dataFileFormat.equals(FileFormat.PARQUET)) {
+        Parquet.DataWriteBuilder parquetBuilder = Parquet.writeData(outputFile)
+            .schema(dataSchema)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(dataSortOrder)
+            .overwrite();
 
-        case PARQUET:
-          Parquet.DataWriteBuilder parquetBuilder = Parquet.writeData(outputFile)
-              .schema(dataSchema)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(dataSortOrder)
-              .overwrite();
+        configureDataWrite(parquetBuilder);
 
-          configureDataWrite(parquetBuilder);
+        return parquetBuilder.build();
+      } else if (dataFileFormat.equals(FileFormat.ORC)) {
+        ORC.DataWriteBuilder orcBuilder = ORC.writeData(outputFile)
+            .schema(dataSchema)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(dataSortOrder)
+            .overwrite();
 
-          return parquetBuilder.build();
+        configureDataWrite(orcBuilder);
 
-        case ORC:
-          ORC.DataWriteBuilder orcBuilder = ORC.writeData(outputFile)
-              .schema(dataSchema)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(dataSortOrder)
-              .overwrite();
-
-          configureDataWrite(orcBuilder);
-
-          return orcBuilder.build();
-
-        default:
-          throw new UnsupportedOperationException("Unsupported data file format: " + dataFileFormat);
+        return orcBuilder.build();
+      } else {
+        throw new UnsupportedOperationException("Unsupported data file format: " + dataFileFormat);
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -152,57 +148,54 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
     MetricsConfig metricsConfig = MetricsConfig.forTable(table);
 
     try {
-      switch (deleteFileFormat) {
-        case AVRO:
-          Avro.DeleteWriteBuilder avroBuilder = Avro.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(equalityDeleteRowSchema)
-              .equalityFieldIds(equalityFieldIds)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(equalityDeleteSortOrder)
-              .overwrite();
+      if (deleteFileFormat.equals(FileFormat.AVRO)) {
+        Avro.DeleteWriteBuilder avroBuilder = Avro.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(equalityDeleteRowSchema)
+            .equalityFieldIds(equalityFieldIds)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(equalityDeleteSortOrder)
+            .overwrite();
 
-          configureEqualityDelete(avroBuilder);
+        configureEqualityDelete(avroBuilder);
 
-          return avroBuilder.buildEqualityWriter();
+        return avroBuilder.buildEqualityWriter();
+      } else if (deleteFileFormat.equals(FileFormat.PARQUET)) {
+        Parquet.DeleteWriteBuilder parquetBuilder = Parquet.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(equalityDeleteRowSchema)
+            .equalityFieldIds(equalityFieldIds)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(equalityDeleteSortOrder)
+            .overwrite();
 
-        case PARQUET:
-          Parquet.DeleteWriteBuilder parquetBuilder = Parquet.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(equalityDeleteRowSchema)
-              .equalityFieldIds(equalityFieldIds)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(equalityDeleteSortOrder)
-              .overwrite();
+        configureEqualityDelete(parquetBuilder);
 
-          configureEqualityDelete(parquetBuilder);
+        return parquetBuilder.buildEqualityWriter();
+      }
+      if (deleteFileFormat.equals(FileFormat.ORC)) {
+        ORC.DeleteWriteBuilder orcBuilder = ORC.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(equalityDeleteRowSchema)
+            .equalityFieldIds(equalityFieldIds)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(equalityDeleteSortOrder)
+            .overwrite();
 
-          return parquetBuilder.buildEqualityWriter();
+        configureEqualityDelete(orcBuilder);
 
-        case ORC:
-          ORC.DeleteWriteBuilder orcBuilder = ORC.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(equalityDeleteRowSchema)
-              .equalityFieldIds(equalityFieldIds)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .withSortOrder(equalityDeleteSortOrder)
-              .overwrite();
-
-          configureEqualityDelete(orcBuilder);
-
-          return orcBuilder.buildEqualityWriter();
-
-        default:
-          throw new UnsupportedOperationException("Unsupported format for equality deletes: " + deleteFileFormat);
+        return orcBuilder.buildEqualityWriter();
+      } else {
+        throw new UnsupportedOperationException("Unsupported format for equality deletes: " + deleteFileFormat);
       }
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to create new equality delete writer", e);
@@ -218,53 +211,48 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
     MetricsConfig metricsConfig = MetricsConfig.forPositionDelete(table);
 
     try {
-      switch (deleteFileFormat) {
-        case AVRO:
-          Avro.DeleteWriteBuilder avroBuilder = Avro.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(positionDeleteRowSchema)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .overwrite();
+      if (deleteFileFormat.equals(FileFormat.AVRO)) {
+        Avro.DeleteWriteBuilder avroBuilder = Avro.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(positionDeleteRowSchema)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .overwrite();
 
-          configurePositionDelete(avroBuilder);
+        configurePositionDelete(avroBuilder);
 
-          return avroBuilder.buildPositionWriter();
+        return avroBuilder.buildPositionWriter();
+      } else if (deleteFileFormat.equals(FileFormat.PARQUET)) {
+        Parquet.DeleteWriteBuilder parquetBuilder = Parquet.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(positionDeleteRowSchema)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .overwrite();
 
-        case PARQUET:
-          Parquet.DeleteWriteBuilder parquetBuilder = Parquet.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(positionDeleteRowSchema)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .overwrite();
+        configurePositionDelete(parquetBuilder);
 
-          configurePositionDelete(parquetBuilder);
+        return parquetBuilder.buildPositionWriter();
+      } else if (deleteFileFormat.equals(FileFormat.ORC)) {
+        ORC.DeleteWriteBuilder orcBuilder = ORC.writeDeletes(outputFile)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .rowSchema(positionDeleteRowSchema)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .overwrite();
 
-          return parquetBuilder.buildPositionWriter();
+        configurePositionDelete(orcBuilder);
 
-        case ORC:
-          ORC.DeleteWriteBuilder orcBuilder = ORC.writeDeletes(outputFile)
-              .setAll(properties)
-              .metricsConfig(metricsConfig)
-              .rowSchema(positionDeleteRowSchema)
-              .withSpec(spec)
-              .withPartition(partition)
-              .withKeyMetadata(keyMetadata)
-              .overwrite();
-
-          configurePositionDelete(orcBuilder);
-
-          return orcBuilder.buildPositionWriter();
-
-        default:
-          throw new UnsupportedOperationException("Unsupported format for position deletes: " + deleteFileFormat);
+        return orcBuilder.buildPositionWriter();
+      } else {
+        throw new UnsupportedOperationException("Unsupported format for position deletes: " + deleteFileFormat);
       }
-
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to create new position delete writer", e);
     }

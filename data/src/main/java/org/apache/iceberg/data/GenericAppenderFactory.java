@@ -87,36 +87,33 @@ public class GenericAppenderFactory implements FileAppenderFactory<Record> {
   public FileAppender<Record> newAppender(OutputFile outputFile, FileFormat fileFormat) {
     MetricsConfig metricsConfig = MetricsConfig.fromProperties(config);
     try {
-      switch (fileFormat) {
-        case AVRO:
-          return Avro.write(outputFile)
-              .schema(schema)
-              .createWriterFunc(DataWriter::create)
-              .metricsConfig(metricsConfig)
-              .setAll(config)
-              .overwrite()
-              .build();
-
-        case PARQUET:
-          return Parquet.write(outputFile)
-              .schema(schema)
-              .createWriterFunc(GenericParquetWriter::buildWriter)
-              .setAll(config)
-              .metricsConfig(metricsConfig)
-              .overwrite()
-              .build();
-
-        case ORC:
-          return ORC.write(outputFile)
-              .schema(schema)
-              .createWriterFunc(GenericOrcWriter::buildWriter)
-              .setAll(config)
-              .metricsConfig(metricsConfig)
-              .overwrite()
-              .build();
-
-        default:
-          throw new UnsupportedOperationException("Cannot write unknown file format: " + fileFormat);
+      if (fileFormat.equals(FileFormat.AVRO)) {
+        return Avro.write(outputFile)
+            .schema(schema)
+            .createWriterFunc(DataWriter::create)
+            .metricsConfig(metricsConfig)
+            .setAll(config)
+            .overwrite()
+            .build();
+      } else if (fileFormat.equals(FileFormat.PARQUET)) {
+        return Parquet.write(outputFile)
+            .schema(schema)
+            .createWriterFunc(GenericParquetWriter::buildWriter)
+            .setAll(config)
+            .metricsConfig(metricsConfig)
+            .overwrite()
+            .build();
+      }
+      if (fileFormat.equals(FileFormat.ORC)) {
+        return ORC.write(outputFile)
+            .schema(schema)
+            .createWriterFunc(GenericOrcWriter::buildWriter)
+            .setAll(config)
+            .metricsConfig(metricsConfig)
+            .overwrite()
+            .build();
+      } else {
+        throw new UnsupportedOperationException("Cannot write unknown file format: " + fileFormat);
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -134,55 +131,53 @@ public class GenericAppenderFactory implements FileAppenderFactory<Record> {
   @Override
   public EqualityDeleteWriter<Record> newEqDeleteWriter(EncryptedOutputFile file, FileFormat format,
                                                         StructLike partition) {
-    Preconditions.checkState(equalityFieldIds != null && equalityFieldIds.length > 0,
+    Preconditions.checkState(
+        equalityFieldIds != null && equalityFieldIds.length > 0,
         "Equality field ids shouldn't be null or empty when creating equality-delete writer");
-    Preconditions.checkNotNull(eqDeleteRowSchema,
+    Preconditions.checkNotNull(
+        eqDeleteRowSchema,
         "Equality delete row schema shouldn't be null when creating equality-delete writer");
 
     MetricsConfig metricsConfig = MetricsConfig.fromProperties(config);
     try {
-      switch (format) {
-        case AVRO:
-          return Avro.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(DataWriter::create)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .rowSchema(eqDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .equalityFieldIds(equalityFieldIds)
-              .buildEqualityWriter();
-
-        case ORC:
-          return ORC.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(GenericOrcWriter::buildWriter)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .metricsConfig(metricsConfig)
-              .rowSchema(eqDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .equalityFieldIds(equalityFieldIds)
-              .buildEqualityWriter();
-
-        case PARQUET:
-          return Parquet.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(GenericParquetWriter::buildWriter)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .metricsConfig(metricsConfig)
-              .rowSchema(eqDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .equalityFieldIds(equalityFieldIds)
-              .buildEqualityWriter();
-
-        default:
-          throw new UnsupportedOperationException(
-              "Cannot write equality-deletes for unsupported file format: " + format);
+      if (format.equals(FileFormat.AVRO)) {
+        return Avro.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(DataWriter::create)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .rowSchema(eqDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .equalityFieldIds(equalityFieldIds)
+            .buildEqualityWriter();
+      } else if (format.equals(FileFormat.ORC)) {
+        return ORC.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(GenericOrcWriter::buildWriter)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .metricsConfig(metricsConfig)
+            .rowSchema(eqDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .equalityFieldIds(equalityFieldIds)
+            .buildEqualityWriter();
+      } else if (format.equals(FileFormat.PARQUET)) {
+        return Parquet.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(GenericParquetWriter::buildWriter)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .metricsConfig(metricsConfig)
+            .rowSchema(eqDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .equalityFieldIds(equalityFieldIds)
+            .buildEqualityWriter();
+      } else {
+        throw new UnsupportedOperationException(
+            "Cannot write equality-deletes for unsupported file format: " + format);
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -194,43 +189,39 @@ public class GenericAppenderFactory implements FileAppenderFactory<Record> {
                                                          StructLike partition) {
     MetricsConfig metricsConfig = MetricsConfig.fromProperties(config);
     try {
-      switch (format) {
-        case AVRO:
-          return Avro.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(DataWriter::create)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .rowSchema(posDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .buildPositionWriter();
-
-        case ORC:
-          return ORC.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(GenericOrcWriter::buildWriter)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .rowSchema(posDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .buildPositionWriter();
-
-        case PARQUET:
-          return Parquet.writeDeletes(file.encryptingOutputFile())
-              .createWriterFunc(GenericParquetWriter::buildWriter)
-              .withPartition(partition)
-              .overwrite()
-              .setAll(config)
-              .metricsConfig(metricsConfig)
-              .rowSchema(posDeleteRowSchema)
-              .withSpec(spec)
-              .withKeyMetadata(file.keyMetadata())
-              .buildPositionWriter();
-
-        default:
-          throw new UnsupportedOperationException("Cannot write pos-deletes for unsupported file format: " + format);
+      if (format.equals(FileFormat.AVRO)) {
+        return Avro.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(DataWriter::create)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .rowSchema(posDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .buildPositionWriter();
+      } else if (format.equals(FileFormat.ORC)) {
+        return ORC.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(GenericOrcWriter::buildWriter)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .rowSchema(posDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .buildPositionWriter();
+      } else if (format.equals(FileFormat.PARQUET)) {
+        return Parquet.writeDeletes(file.encryptingOutputFile())
+            .createWriterFunc(GenericParquetWriter::buildWriter)
+            .withPartition(partition)
+            .overwrite()
+            .setAll(config)
+            .metricsConfig(metricsConfig)
+            .rowSchema(posDeleteRowSchema)
+            .withSpec(spec)
+            .withKeyMetadata(file.keyMetadata())
+            .buildPositionWriter();
+      } else {
+        throw new UnsupportedOperationException("Cannot write pos-deletes for unsupported file format: " + format);
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);

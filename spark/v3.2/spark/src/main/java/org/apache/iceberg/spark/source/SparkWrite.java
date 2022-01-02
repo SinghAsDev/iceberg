@@ -585,7 +585,7 @@ abstract class SparkWrite implements Write, RequiresDistributionAndOrdering {
     private UnpartitionedDataWriter(SparkFileWriterFactory writerFactory, OutputFileFactory fileFactory,
                                     FileIO io, PartitionSpec spec, FileFormat format, long targetFileSize) {
       // TODO: support ORC rolling writers
-      if (format == FileFormat.ORC) {
+      if (format.equals(FileFormat.ORC)) {
         EncryptedOutputFile outputFile = fileFactory.newOutputFile();
         delegate = writerFactory.newDataWriter(outputFile, spec, null);
       } else {

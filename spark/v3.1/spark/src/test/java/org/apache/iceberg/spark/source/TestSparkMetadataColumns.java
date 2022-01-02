@@ -122,7 +122,7 @@ public class TestSparkMetadataColumns extends SparkTestBase {
   @Test
   public void testSpecAndPartitionMetadataColumns() {
     // TODO: support metadata structs in vectorized ORC reads
-    Assume.assumeFalse(fileFormat == FileFormat.ORC && vectorized);
+    Assume.assumeFalse(fileFormat.equals(FileFormat.ORC) && vectorized);
 
     sql("INSERT INTO TABLE %s VALUES (1, 'a1', 'b1')", TABLE_NAME);
 
@@ -178,15 +178,12 @@ public class TestSparkMetadataColumns extends SparkTestBase {
     updateProperties.set(FORMAT_VERSION, String.valueOf(formatVersion));
     updateProperties.set(DEFAULT_FILE_FORMAT, fileFormat.name());
 
-    switch (fileFormat) {
-      case PARQUET:
-        updateProperties.set(PARQUET_VECTORIZATION_ENABLED, String.valueOf(vectorized));
-        break;
-      case ORC:
-        updateProperties.set(ORC_VECTORIZATION_ENABLED, String.valueOf(vectorized));
-        break;
-      default:
-        Preconditions.checkState(!vectorized, "File format %s does not support vectorized reads", fileFormat);
+    if (fileFormat.equals(FileFormat.PARQUET)) {
+      updateProperties.set(PARQUET_VECTORIZATION_ENABLED, String.valueOf(vectorized));
+    } else if (fileFormat.equals(FileFormat.ORC)) {
+      updateProperties.set(ORC_VECTORIZATION_ENABLED, String.valueOf(vectorized));
+    } else {
+      Preconditions.checkState(!vectorized, "File format %s does not support vectorized reads", fileFormat);
     }
 
     updateProperties.commit();

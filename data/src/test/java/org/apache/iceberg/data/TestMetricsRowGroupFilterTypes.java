@@ -159,15 +159,12 @@ public class TestMetricsRowGroupFilterTypes {
       record.setField("_fixed_decimal", new BigDecimal("99.99"));
       records.add(record);
     }
-    switch (format) {
-      case ORC:
-        createOrcInputFile(records);
-        break;
-      case PARQUET:
-        createParquetInputFile(records);
-        break;
-      default:
-        throw new UnsupportedOperationException("Row group filter types tests not supported for " + format);
+    if (format.equals(FileFormat.ORC)) {
+      createOrcInputFile(records);
+    } else if (format.equals(FileFormat.PARQUET)) {
+      createParquetInputFile(records);
+    } else {
+      throw new UnsupportedOperationException("Row group filter types tests not supported for " + format);
     }
   }
 
@@ -278,13 +275,12 @@ public class TestMetricsRowGroupFilterTypes {
   }
 
   private boolean shouldRead(Object value) {
-    switch (format) {
-      case ORC:
-        return shouldReadOrc(value);
-      case PARQUET:
-        return shouldReadParquet(value);
-      default:
-        throw new UnsupportedOperationException("Row group filter types tests not supported for " + format);
+    if (format.equals(FileFormat.ORC)) {
+      return shouldReadOrc(value);
+    } else if (format.equals(FileFormat.PARQUET)) {
+      return shouldReadParquet(value);
+    } else {
+      throw new UnsupportedOperationException("Row group filter types tests not supported for " + format);
     }
   }
 

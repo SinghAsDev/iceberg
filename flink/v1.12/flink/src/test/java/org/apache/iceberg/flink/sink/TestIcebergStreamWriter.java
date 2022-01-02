@@ -234,7 +234,7 @@ public class TestIcebergStreamWriter {
   @Test
   public void testTableWithTargetFileSize() throws Exception {
     // TODO: ORC file does not support target file size before closed.
-    if (format == FileFormat.ORC) {
+    if (format.equals(FileFormat.ORC)) {
       return;
     }
     // Adjust the target-file-size in table properties.

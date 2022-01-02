@@ -53,7 +53,7 @@ public class FanoutDataWriter<T> extends FanoutWriter<T, DataWriteResult> {
   @Override
   protected FileWriter<T, DataWriteResult> newWriter(PartitionSpec spec, StructLike partition) {
     // TODO: support ORC rolling writers
-    if (fileFormat == FileFormat.ORC) {
+    if (fileFormat.equals(FileFormat.ORC)) {
       EncryptedOutputFile outputFile = newOutputFile(fileFactory, spec, partition);
       return writerFactory.newDataWriter(outputFile, spec, partition);
     } else {

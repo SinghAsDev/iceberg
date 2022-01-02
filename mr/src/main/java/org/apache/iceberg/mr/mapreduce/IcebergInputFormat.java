@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.iceberg.CombinedScanTask;
 import org.apache.iceberg.DataFile;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.PartitionSpec;
@@ -275,19 +276,16 @@ public class IcebergInputFormat<T> extends InputFormat<Void, T> {
           file.keyMetadata()));
 
       CloseableIterable<T> iterable;
-      switch (file.format()) {
-        case AVRO:
-          iterable = newAvroIterable(inputFile, currentTask, readSchema);
-          break;
-        case ORC:
-          iterable = newOrcIterable(inputFile, currentTask, readSchema);
-          break;
-        case PARQUET:
-          iterable = newParquetIterable(inputFile, currentTask, readSchema);
-          break;
-        default:
-          throw new UnsupportedOperationException(
-              String.format("Cannot read %s file: %s", file.format().name(), file.path()));
+      FileFormat format = file.format();
+      if (format.equals(FileFormat.AVRO)) {
+        iterable = newAvroIterable(inputFile, currentTask, readSchema);
+      } else if (format.equals(FileFormat.ORC)) {
+        iterable = newOrcIterable(inputFile, currentTask, readSchema);
+      } else if (format.equals(FileFormat.PARQUET)) {
+        iterable = newParquetIterable(inputFile, currentTask, readSchema);
+      } else {
+        throw new UnsupportedOperationException(
+            String.format("Cannot read %s file: %s", file.format().name(), file.path()));
       }
 
       return iterable;

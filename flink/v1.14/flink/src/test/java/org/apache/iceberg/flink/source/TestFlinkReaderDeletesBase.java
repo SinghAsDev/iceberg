@@ -62,7 +62,7 @@ public abstract class TestFlinkReaderDeletesBase extends DeleteReadTests {
     return new Object[][] {
         new Object[] { FileFormat.PARQUET },
         new Object[] { FileFormat.AVRO },
-        new Object[] { FileFormat.ORC }
+        new Object[] { FileFormat.ORC}
     };
   }
 

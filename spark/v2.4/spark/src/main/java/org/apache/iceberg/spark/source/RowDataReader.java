@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.iceberg.CombinedScanTask;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataTask;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.Schema;
@@ -89,22 +90,16 @@ class RowDataReader extends BaseDataReader<InternalRow> {
       InputFile location = getInputFile(task);
       Preconditions.checkNotNull(location, "Could not find InputFile associated with FileScanTask");
 
-      switch (task.file().format()) {
-        case PARQUET:
-          iter = newParquetIterable(location, task, readSchema, idToConstant);
-          break;
-
-        case AVRO:
-          iter = newAvroIterable(location, task, readSchema, idToConstant);
-          break;
-
-        case ORC:
-          iter = newOrcIterable(location, task, readSchema, idToConstant);
-          break;
-
-        default:
-          throw new UnsupportedOperationException(
-              "Cannot read unknown format: " + task.file().format());
+      FileFormat fileFormat = task.file().format();
+      if (fileFormat.equals(FileFormat.PARQUET)) {
+        iter = newParquetIterable(location, task, readSchema, idToConstant);
+      } else if (fileFormat.equals(FileFormat.AVRO)) {
+        iter = newAvroIterable(location, task, readSchema, idToConstant);
+      } else if (fileFormat.equals(FileFormat.ORC)) {
+        iter = newOrcIterable(location, task, readSchema, idToConstant);
+      } else {
+        throw new UnsupportedOperationException(
+            "Cannot read unknown format: " + task.file().format());
       }
     }
 

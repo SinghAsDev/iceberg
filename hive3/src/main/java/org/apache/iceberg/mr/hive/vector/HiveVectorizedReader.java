@@ -98,21 +98,19 @@ public class HiveVectorizedReader {
     }
 
     try {
-      switch (format) {
-        case ORC:
+      if (format.equals(FileFormat.ORC)) {
 
-          // Metadata information has to be passed along in the OrcSplit. Without specifying this, the vectorized
-          // reader will assume that the ORC file ends at the task's start + length, and might fail reading the tail..
-          OrcTail orcTail = VectorizedReadUtils.getOrcTail(inputFile, job);
+        // Metadata information has to be passed along in the OrcSplit. Without specifying this, the vectorized
+        // reader will assume that the ORC file ends at the task's start + length, and might fail reading the tail..
+        OrcTail orcTail = VectorizedReadUtils.getOrcTail(inputFile, job);
 
-          InputSplit split = new OrcSplit(path, null, task.start(), task.length(), (String[]) null, orcTail,
-              false, false, Lists.newArrayList(), 0, task.length(), path.getParent());
-          RecordReader<NullWritable, VectorizedRowBatch> recordReader =
-              new VectorizedOrcInputFormat().getRecordReader(split, job, reporter);
-          return createVectorizedRowBatchIterable(recordReader, job, partitionColIndices, partitionValues);
-
-        default:
-          throw new UnsupportedOperationException("Vectorized Hive reading unimplemented for format: " + format);
+        InputSplit split = new OrcSplit(path, null, task.start(), task.length(), (String[]) null, orcTail,
+            false, false, Lists.newArrayList(), 0, task.length(), path.getParent());
+        RecordReader<NullWritable, VectorizedRowBatch> recordReader =
+            new VectorizedOrcInputFormat().getRecordReader(split, job, reporter);
+        return createVectorizedRowBatchIterable(recordReader, job, partitionColIndices, partitionValues);
+      } else {
+        throw new UnsupportedOperationException("Vectorized Hive reading unimplemented for format: " + format);
       }
 
     } catch (IOException ioe) {

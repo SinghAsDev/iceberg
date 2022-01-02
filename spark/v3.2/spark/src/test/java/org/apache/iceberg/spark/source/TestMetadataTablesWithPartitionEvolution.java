@@ -73,7 +73,7 @@ public class TestMetadataTablesWithPartitionEvolution extends SparkCatalogTestBa
                 "type", "hive",
                 "default-namespace", "default"
             ),
-            ORC,
+          ORC,
             formatVersion()
         },
         { "testhadoop", SparkCatalog.class.getName(),

@@ -101,7 +101,7 @@ public abstract class TestMergingMetrics<T> {
 
   @Parameterized.Parameters(name = "fileFormat = {0}")
   public static Object[] parameters() {
-    return new Object[] { FileFormat.PARQUET, FileFormat.ORC };
+    return new Object[] { FileFormat.PARQUET, FileFormat.ORC};
   }
 
   public TestMergingMetrics(FileFormat fileFormat) {
@@ -181,7 +181,7 @@ public abstract class TestMergingMetrics<T> {
   }
 
   private void assertBoundValueMatch(Number expected, Map<Integer, ByteBuffer> boundMap, Types.NestedField field) {
-    if (field.type().isNestedType() && fileFormat == FileFormat.ORC) {
+    if (field.type().isNestedType() && fileFormat.equals(FileFormat.ORC)) {
       // we don't update floating column bounds values within ORC nested columns
       return;
     }

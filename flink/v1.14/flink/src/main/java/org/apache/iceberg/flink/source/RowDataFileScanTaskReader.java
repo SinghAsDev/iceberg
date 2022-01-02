@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.Schema;
@@ -92,22 +93,16 @@ public class RowDataFileScanTaskReader implements FileScanTaskReader<RowData> {
     if (task.isDataTask()) {
       throw new UnsupportedOperationException("Cannot read data task.");
     } else {
-      switch (task.file().format()) {
-        case PARQUET:
-          iter = newParquetIterable(task, schema, idToConstant, inputFilesDecryptor);
-          break;
-
-        case AVRO:
-          iter = newAvroIterable(task, schema, idToConstant, inputFilesDecryptor);
-          break;
-
-        case ORC:
-          iter = newOrcIterable(task, schema, idToConstant, inputFilesDecryptor);
-          break;
-
-        default:
-          throw new UnsupportedOperationException(
-              "Cannot read unknown format: " + task.file().format());
+      FileFormat format = task.file().format();
+      if (format.equals(FileFormat.PARQUET)) {
+        iter = newParquetIterable(task, schema, idToConstant, inputFilesDecryptor);
+      } else if (format.equals(FileFormat.AVRO)) {
+        iter = newAvroIterable(task, schema, idToConstant, inputFilesDecryptor);
+      } else if (format.equals(FileFormat.ORC)) {
+        iter = newOrcIterable(task, schema, idToConstant, inputFilesDecryptor);
+      } else {
+        throw new UnsupportedOperationException(
+            "Cannot read unknown format: " + format);
       }
     }
 

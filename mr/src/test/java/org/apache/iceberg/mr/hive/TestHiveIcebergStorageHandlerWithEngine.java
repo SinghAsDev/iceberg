@@ -112,7 +112,7 @@ public class TestHiveIcebergStorageHandlerWithEngine {
         if (javaVersion.equals("1.8") || "mr".equals(engine)) {
           testParams.add(new Object[] {fileFormat, engine, TestTables.TestTableType.HIVE_CATALOG, false});
           // test for vectorization=ON in case of ORC format and Tez engine
-          if (fileFormat == FileFormat.ORC && "tez".equals(engine) && MetastoreUtil.hive3PresentOnClasspath()) {
+          if (fileFormat.equals(FileFormat.ORC) && "tez".equals(engine) && MetastoreUtil.hive3PresentOnClasspath()) {
             testParams.add(new Object[] {fileFormat, engine, TestTables.TestTableType.HIVE_CATALOG, true});
           }
         }
@@ -271,7 +271,7 @@ public class TestHiveIcebergStorageHandlerWithEngine {
         continue;
       }
       // TODO: remove this filter when issue #1881 is resolved
-      if (type == Types.UUIDType.get() && fileFormat == FileFormat.PARQUET) {
+      if (type == Types.UUIDType.get() && fileFormat.equals(FileFormat.PARQUET)) {
         continue;
       }
       String tableName = type.typeId().toString().toLowerCase() + "_table_" + i;
@@ -298,7 +298,7 @@ public class TestHiveIcebergStorageHandlerWithEngine {
         continue;
       }
       // TODO: remove this filter when issue #1881 is resolved
-      if (type == Types.UUIDType.get() && fileFormat == FileFormat.PARQUET) {
+      if (type == Types.UUIDType.get() && fileFormat.equals(FileFormat.PARQUET)) {
         continue;
       }
       String tableName = type.typeId().toString().toLowerCase() + "_table_" + i;
@@ -342,7 +342,7 @@ public class TestHiveIcebergStorageHandlerWithEngine {
     for (int i = 0; i < SUPPORTED_TYPES.size(); i++) {
       Type type = SUPPORTED_TYPES.get(i);
       // TODO: remove this filter when issue #1881 is resolved
-      if (type == Types.UUIDType.get() && fileFormat == FileFormat.PARQUET) {
+      if (type == Types.UUIDType.get() && fileFormat.equals(FileFormat.PARQUET)) {
         continue;
       }
       // TODO: remove this filter when we figure out how we could test binary types
@@ -707,7 +707,7 @@ public class TestHiveIcebergStorageHandlerWithEngine {
   public void testWriteWithDefaultWriteFormat() {
     Assume.assumeTrue("Testing the default file format is enough for a single scenario.",
         executionEngine.equals("mr") && testTableType == TestTables.TestTableType.HIVE_CATALOG &&
-                fileFormat == FileFormat.ORC);
+                fileFormat.equals(FileFormat.ORC));
 
     TableIdentifier identifier = TableIdentifier.of("default", "customers");
 

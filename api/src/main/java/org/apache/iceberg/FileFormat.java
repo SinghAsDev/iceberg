@@ -19,23 +19,43 @@
 
 package org.apache.iceberg;
 
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.iceberg.types.Comparators;
 
 /**
  * Enum of supported file formats.
  */
-public enum FileFormat {
-  ORC("orc", true),
-  PARQUET("parquet", true),
-  AVRO("avro", true),
-  METADATA("metadata.json", false);
+@SuppressWarnings({"checkstyle:VisibilityModifier", "checkstyle:StaticVariableName"})
+public class FileFormat implements Serializable {
+  public static FileFormat ORC = new FileFormat("ORC", "orc", true);
+  public static FileFormat PARQUET = new FileFormat("PARQUET", "parquet", true);
+  public static FileFormat AVRO = new FileFormat("AVRO", "avro", true);
+  public static FileFormat METADATA = new FileFormat("METADATA", "metadata.json", false);
 
+  private static final Map<String, FileFormat> inbuiltFormats = Stream.of(
+      ORC,
+      PARQUET,
+      AVRO,
+      METADATA
+  ).collect(Collectors.toMap(FileFormat::name, Function.identity()));
+
+  private final String name;
   private final String ext;
   private final boolean splittable;
 
-  FileFormat(String ext, boolean splittable) {
+  public FileFormat(String name, String ext, boolean splittable) {
+    this.name = name;
     this.ext = "." + ext;
     this.splittable = splittable;
+  }
+
+  public static FileFormat valueOf(String name) {
+    return inbuiltFormats.get(name);
   }
 
   public boolean isSplittable() {
@@ -56,7 +76,7 @@ public enum FileFormat {
   }
 
   public static FileFormat fromFileName(CharSequence filename) {
-    for (FileFormat format : FileFormat.values()) {
+    for (FileFormat format : inbuiltFormats.values()) {
       int extStart = filename.length() - format.ext.length();
       if (Comparators.charSequences().compare(format.ext, filename.subSequence(extStart, filename.length())) == 0) {
         return format;
@@ -64,5 +84,32 @@ public enum FileFormat {
     }
 
     return null;
+  }
+
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return  true;
+    }
+
+    if (!(o instanceof FileFormat)) {
+      return false;
+    }
+
+    return ((FileFormat) o).name().equals(this.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, ext, splittable);
   }
 }

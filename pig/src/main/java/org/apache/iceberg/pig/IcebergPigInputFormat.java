@@ -35,6 +35,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.iceberg.CombinedScanTask;
 import org.apache.iceberg.DataFile;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
@@ -196,49 +197,46 @@ public class IcebergPigInputFormat<T> extends InputFormat<Void, T> {
       // schema needed for the projection and filtering
       boolean hasJoinedPartitionColumns = !idColumns.isEmpty();
 
-      switch (file.format()) {
-        case PARQUET:
-          Map<Integer, Object> partitionValueMap = Maps.newHashMap();
+      if (file.format() == FileFormat.PARQUET) {
+        Map<Integer, Object> partitionValueMap = Maps.newHashMap();
 
-          if (hasJoinedPartitionColumns) {
+        if (hasJoinedPartitionColumns) {
 
-            Schema readSchema = TypeUtil.selectNot(projectedSchema, idColumns);
-            Schema projectedPartitionSchema = TypeUtil.select(projectedSchema, idColumns);
+          Schema readSchema = TypeUtil.selectNot(projectedSchema, idColumns);
+          Schema projectedPartitionSchema = TypeUtil.select(projectedSchema, idColumns);
 
-            Map<String, Integer> partitionSpecFieldIndexMap = Maps.newHashMap();
-            for (int i = 0; i < spec.fields().size(); i++) {
-              partitionSpecFieldIndexMap.put(spec.fields().get(i).name(), i);
-            }
-
-            for (Types.NestedField field : projectedPartitionSchema.columns()) {
-              int partitionIndex = partitionSpecFieldIndexMap.get(field.name());
-
-              Object partitionValue = file.partition().get(partitionIndex, Object.class);
-              partitionValueMap.put(field.fieldId(), convertPartitionValue(field.type(), partitionValue));
-            }
-
-            reader = Parquet.read(inputFile)
-                .project(readSchema)
-                .split(currentTask.start(), currentTask.length())
-                .filter(currentTask.residual())
-                .createReaderFunc(
-                    fileSchema -> PigParquetReader.buildReader(fileSchema, projectedSchema, partitionValueMap))
-                .build();
-          } else {
-            reader = Parquet.read(inputFile)
-                .project(projectedSchema)
-                .split(currentTask.start(), currentTask.length())
-                .filter(currentTask.residual())
-                .createReaderFunc(
-                    fileSchema -> PigParquetReader.buildReader(fileSchema, projectedSchema, partitionValueMap))
-                .build();
+          Map<String, Integer> partitionSpecFieldIndexMap = Maps.newHashMap();
+          for (int i = 0; i < spec.fields().size(); i++) {
+            partitionSpecFieldIndexMap.put(spec.fields().get(i).name(), i);
           }
 
-          recordIterator = reader.iterator();
+          for (Types.NestedField field : projectedPartitionSchema.columns()) {
+            int partitionIndex = partitionSpecFieldIndexMap.get(field.name());
 
-          break;
-        default:
-          throw new UnsupportedOperationException("Unsupported file format: " + file.format());
+            Object partitionValue = file.partition().get(partitionIndex, Object.class);
+            partitionValueMap.put(field.fieldId(), convertPartitionValue(field.type(), partitionValue));
+          }
+
+          reader = Parquet.read(inputFile)
+              .project(readSchema)
+              .split(currentTask.start(), currentTask.length())
+              .filter(currentTask.residual())
+              .createReaderFunc(
+                  fileSchema -> PigParquetReader.buildReader(fileSchema, projectedSchema, partitionValueMap))
+              .build();
+        } else {
+          reader = Parquet.read(inputFile)
+              .project(projectedSchema)
+              .split(currentTask.start(), currentTask.length())
+              .filter(currentTask.residual())
+              .createReaderFunc(
+                  fileSchema -> PigParquetReader.buildReader(fileSchema, projectedSchema, partitionValueMap))
+              .build();
+        }
+
+        recordIterator = reader.iterator();
+      } else {
+        throw new UnsupportedOperationException("Unsupported file format: " + file.format());
       }
 
       return true;

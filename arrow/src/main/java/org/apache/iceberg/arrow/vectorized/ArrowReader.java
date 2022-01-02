@@ -318,7 +318,7 @@ public class ArrowReader extends CloseableGroup {
       CloseableIterable<ColumnarBatch> iter;
       InputFile location = getInputFile(task);
       Preconditions.checkNotNull(location, "Could not find InputFile associated with FileScanTask");
-      if (task.file().format() == FileFormat.PARQUET) {
+      if (task.file().format().equals(FileFormat.PARQUET)) {
         Parquet.ReadBuilder builder = Parquet.read(location)
             .project(expectedSchema)
             .split(task.start(), task.length())

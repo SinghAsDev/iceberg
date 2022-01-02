@@ -57,7 +57,7 @@ public class ClusteredPositionDeleteWriter<T> extends ClusteredWriter<PositionDe
   @Override
   protected FileWriter<PositionDelete<T>, DeleteWriteResult> newWriter(PartitionSpec spec, StructLike partition) {
     // TODO: support ORC rolling writers
-    if (fileFormat == FileFormat.ORC) {
+    if (fileFormat.equals(FileFormat.ORC)) {
       EncryptedOutputFile outputFile = newOutputFile(fileFactory, spec, partition);
       return writerFactory.newPositionDeleteWriter(outputFile, spec, partition);
     } else {

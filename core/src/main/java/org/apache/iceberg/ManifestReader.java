@@ -195,25 +195,23 @@ public class ManifestReader<F extends ContentFile<F>>
     fields.addAll(projection.asStruct().fields());
     fields.add(MetadataColumns.ROW_POSITION);
 
-    switch (format) {
-      case AVRO:
-        AvroIterable<ManifestEntry<F>> reader = Avro.read(file)
-            .project(ManifestEntry.wrapFileSchema(Types.StructType.of(fields)))
-            .rename("manifest_entry", GenericManifestEntry.class.getName())
-            .rename("partition", PartitionData.class.getName())
-            .rename("r102", PartitionData.class.getName())
-            .rename("data_file", content.fileClass())
-            .rename("r2", content.fileClass())
-            .classLoader(GenericManifestEntry.class.getClassLoader())
-            .reuseContainers()
-            .build();
+    if (format.equals(FileFormat.AVRO)) {
+      AvroIterable<ManifestEntry<F>> reader = Avro.read(file)
+          .project(ManifestEntry.wrapFileSchema(Types.StructType.of(fields)))
+          .rename("manifest_entry", GenericManifestEntry.class.getName())
+          .rename("partition", PartitionData.class.getName())
+          .rename("r102", PartitionData.class.getName())
+          .rename("data_file", content.fileClass())
+          .rename("r2", content.fileClass())
+          .classLoader(GenericManifestEntry.class.getClassLoader())
+          .reuseContainers()
+          .build();
 
-        addCloseable(reader);
+      addCloseable(reader);
 
-        return CloseableIterable.transform(reader, inheritableMetadata::apply);
-
-      default:
-        throw new UnsupportedOperationException("Invalid format for manifest file: " + format);
+      return CloseableIterable.transform(reader, inheritableMetadata::apply);
+    } else {
+      throw new UnsupportedOperationException("Invalid format for manifest file: " + format);
     }
   }
 

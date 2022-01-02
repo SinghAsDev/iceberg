@@ -492,30 +492,23 @@ public class TestTaskEqualityDeltaWriter extends TableTestBase {
     CloseableIterable<Record> iterable;
 
     InputFile inputFile = Files.localInput(path.toString());
-    switch (format) {
-      case PARQUET:
-        iterable = Parquet.read(inputFile)
-            .project(schema)
-            .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(schema, fileSchema))
-            .build();
-        break;
-
-      case AVRO:
-        iterable = Avro.read(inputFile)
-            .project(schema)
-            .createReaderFunc(DataReader::create)
-            .build();
-        break;
-
-      case ORC:
-        iterable = ORC.read(inputFile)
-            .project(schema)
-            .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(schema, fileSchema))
-            .build();
-        break;
-
-      default:
-        throw new UnsupportedOperationException("Unsupported file format: " + format);
+    if (format.equals(FileFormat.PARQUET)) {
+      iterable = Parquet.read(inputFile)
+          .project(schema)
+          .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(schema, fileSchema))
+          .build();
+    } else if (format.equals(FileFormat.AVRO)) {
+      iterable = Avro.read(inputFile)
+          .project(schema)
+          .createReaderFunc(DataReader::create)
+          .build();
+    } else if (format.equals(FileFormat.ORC)) {
+      iterable = ORC.read(inputFile)
+          .project(schema)
+          .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(schema, fileSchema))
+          .build();
+    } else {
+      throw new UnsupportedOperationException("Unsupported file format: " + format);
     }
 
     try (CloseableIterable<Record> closeableIterable = iterable) {

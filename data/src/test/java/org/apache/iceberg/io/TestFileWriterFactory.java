@@ -377,36 +377,32 @@ public abstract class TestFileWriterFactory<T> extends WriterTestBase<T> {
   }
 
   private List<Record> readFile(Schema schema, InputFile inputFile) throws IOException {
-    switch (fileFormat) {
-      case PARQUET:
-        try (CloseableIterable<Record> records = Parquet.read(inputFile)
-            .project(schema)
-            .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(schema, fileSchema))
-            .build()) {
+    if (fileFormat.equals(FileFormat.PARQUET)) {
+      try (CloseableIterable<Record> records = Parquet.read(inputFile)
+          .project(schema)
+          .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(schema, fileSchema))
+          .build()) {
 
-          return ImmutableList.copyOf(records);
-        }
+        return ImmutableList.copyOf(records);
+      }
+    } else if (fileFormat.equals(FileFormat.AVRO)) {
+      try (CloseableIterable<Record> records = Avro.read(inputFile)
+          .project(schema)
+          .createReaderFunc(DataReader::create)
+          .build()) {
 
-      case AVRO:
-        try (CloseableIterable<Record> records = Avro.read(inputFile)
-            .project(schema)
-            .createReaderFunc(DataReader::create)
-            .build()) {
+        return ImmutableList.copyOf(records);
+      }
+    } else if (fileFormat.equals(FileFormat.ORC)) {
+      try (CloseableIterable<Record> records = ORC.read(inputFile)
+          .project(schema)
+          .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(schema, fileSchema))
+          .build()) {
 
-          return ImmutableList.copyOf(records);
-        }
-
-      case ORC:
-        try (CloseableIterable<Record> records = ORC.read(inputFile)
-            .project(schema)
-            .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(schema, fileSchema))
-            .build()) {
-
-          return ImmutableList.copyOf(records);
-        }
-
-      default:
-        throw new UnsupportedOperationException("Unsupported read file format: " + fileFormat);
+        return ImmutableList.copyOf(records);
+      }
+    } else {
+      throw new UnsupportedOperationException("Unsupported read file format: " + fileFormat);
     }
   }
 

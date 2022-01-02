@@ -129,7 +129,7 @@ public abstract class TestRollingFileWriters<T> extends WriterTestBase<T> {
 
   @Test
   public void testRollingEqualityDeleteWriterNoRecords() throws IOException {
-    Assume.assumeFalse("ORC delete files are not supported", fileFormat == FileFormat.ORC);
+    Assume.assumeFalse("ORC delete files are not supported", fileFormat.equals(FileFormat.ORC));
 
     List<Integer> equalityFieldIds = ImmutableList.of(table.schema().findField("id").fieldId());
     Schema equalityDeleteRowSchema = table.schema().select("id");

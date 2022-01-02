@@ -161,15 +161,12 @@ public class TestMetricsRowGroupFilter {
 
   @Before
   public void createInputFile() throws IOException {
-    switch (format) {
-      case ORC:
-        createOrcInputFile();
-        break;
-      case PARQUET:
-        createParquetInputFile();
-        break;
-      default:
-        throw new UnsupportedOperationException("Row group filter tests not supported for " + format);
+    if (format.equals(FileFormat.ORC)) {
+      createOrcInputFile();
+    } else if (format.equals(FileFormat.PARQUET)) {
+      createParquetInputFile();
+    } else {
+      throw new UnsupportedOperationException("Row group filter tests not supported for " + format);
     }
   }
 
@@ -351,7 +348,7 @@ public class TestMetricsRowGroupFilter {
   public void testColumnNotInFile() {
     Assume.assumeFalse(
         "If a column is not in file, ORC does NOT try to apply predicates assuming null values for the column",
-        format == FileFormat.ORC);
+        format.equals(FileFormat.ORC));
     Expression[] cannotMatch = new Expression[] {
         lessThan("not_in_file", 1.0f), lessThanOrEqual("not_in_file", 1.0f),
         equal("not_in_file", 1.0f), greaterThan("not_in_file", 1.0f),
@@ -375,7 +372,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testMissingStatsParquet() {
-    Assume.assumeTrue(format == FileFormat.PARQUET);
+    Assume.assumeTrue(format.equals(FileFormat.PARQUET));
     Expression[] exprs = new Expression[] {
         lessThan("no_stats_parquet", "a"), lessThanOrEqual("no_stats_parquet", "b"), equal("no_stats_parquet", "c"),
         greaterThan("no_stats_parquet", "d"), greaterThanOrEqual("no_stats_parquet", "e"),
@@ -391,7 +388,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testZeroRecordFileParquet() {
-    Assume.assumeTrue(format == FileFormat.PARQUET);
+    Assume.assumeTrue(format.equals(FileFormat.PARQUET));
     BlockMetaData emptyBlock = new BlockMetaData();
     emptyBlock.setRowCount(0);
 
@@ -690,7 +687,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testStringStartsWith() {
-    Assume.assumeFalse("ORC row group filter does not support StringStartsWith", format == FileFormat.ORC);
+    Assume.assumeFalse("ORC row group filter does not support StringStartsWith", format.equals(FileFormat.ORC));
     boolean shouldRead = shouldRead(startsWith("str", "1"));
     Assert.assertTrue("Should read: range matches", shouldRead);
 
@@ -721,7 +718,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testStringNotStartsWith() {
-    Assume.assumeFalse("ORC row group filter does not support StringStartsWith", format == FileFormat.ORC);
+    Assume.assumeFalse("ORC row group filter does not support StringStartsWith", format.equals(FileFormat.ORC));
     boolean shouldRead = shouldRead(notStartsWith("str", "1"));
     Assert.assertTrue("Should read: range matches", shouldRead);
 
@@ -816,7 +813,7 @@ public class TestMetricsRowGroupFilter {
     Assert.assertTrue("Should read: notIn on some nulls column", shouldRead);
 
     shouldRead = shouldRead(notIn("no_nulls", "aaa", ""));
-    if (format == FileFormat.PARQUET) {
+    if (format.equals(FileFormat.PARQUET)) {
       // no_nulls column has all values == "", so notIn("no_nulls", "") should always be false and so should be skipped
       // However, the metrics evaluator in Parquets always reads row group for a notIn filter
       Assert.assertTrue("Should read: notIn on no nulls column", shouldRead);
@@ -833,7 +830,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testInLimitParquet() {
-    Assume.assumeTrue(format == FileFormat.PARQUET);
+    Assume.assumeTrue(format.equals(FileFormat.PARQUET));
 
     boolean shouldRead = shouldRead(in("id", 1, 2));
     Assert.assertFalse("Should not read if IN is evaluated", shouldRead);
@@ -849,7 +846,7 @@ public class TestMetricsRowGroupFilter {
 
   @Test
   public void testParquetTypePromotion() {
-    Assume.assumeTrue("Only valid for Parquet", format == FileFormat.PARQUET);
+    Assume.assumeTrue("Only valid for Parquet", format.equals(FileFormat.PARQUET));
     Schema promotedSchema = new Schema(required(1, "id", Types.LongType.get()));
     boolean shouldRead = new ParquetMetricsRowGroupFilter(promotedSchema, equal("id", INT_MIN_VALUE + 1), true)
         .shouldRead(parquetSchema, rowGroupMetadata);
@@ -861,13 +858,12 @@ public class TestMetricsRowGroupFilter {
   }
 
   private boolean shouldRead(Expression expression, boolean caseSensitive) {
-    switch (format) {
-      case ORC:
-        return shouldReadOrc(expression, caseSensitive);
-      case PARQUET:
-        return shouldReadParquet(expression, caseSensitive, parquetSchema, rowGroupMetadata);
-      default:
-        throw new UnsupportedOperationException("Row group filter tests not supported for " + format);
+    if (format.equals(FileFormat.ORC)) {
+      return shouldReadOrc(expression, caseSensitive);
+    } else if (format.equals(FileFormat.PARQUET)) {
+      return shouldReadParquet(expression, caseSensitive, parquetSchema, rowGroupMetadata);
+    } else {
+      throw new UnsupportedOperationException("Row group filter tests not supported for " + format);
     }
   }
 

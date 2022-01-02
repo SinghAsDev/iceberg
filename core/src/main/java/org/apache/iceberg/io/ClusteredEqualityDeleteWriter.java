@@ -54,7 +54,7 @@ public class ClusteredEqualityDeleteWriter<T> extends ClusteredWriter<T, DeleteW
   @Override
   protected FileWriter<T, DeleteWriteResult> newWriter(PartitionSpec spec, StructLike partition) {
     // TODO: support ORC rolling writers
-    if (fileFormat == FileFormat.ORC) {
+    if (fileFormat.equals(FileFormat.ORC)) {
       EncryptedOutputFile outputFile = newOutputFile(fileFactory, spec, partition);
       return writerFactory.newEqualityDeleteWriter(outputFile, spec, partition);
     } else {

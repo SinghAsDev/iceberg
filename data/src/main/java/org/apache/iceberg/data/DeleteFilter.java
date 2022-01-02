@@ -28,6 +28,7 @@ import org.apache.iceberg.Accessor;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileContent;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.Schema;
@@ -242,40 +243,38 @@ public abstract class DeleteFilter<T> {
 
   private CloseableIterable<Record> openDeletes(DeleteFile deleteFile, Schema deleteSchema) {
     InputFile input = getInputFile(deleteFile.path().toString());
-    switch (deleteFile.format()) {
-      case AVRO:
-        return Avro.read(input)
-            .project(deleteSchema)
-            .reuseContainers()
-            .createReaderFunc(DataReader::create)
-            .build();
+    FileFormat format = deleteFile.format();
+    if (format.equals(FileFormat.AVRO)) {
+      return Avro.read(input)
+          .project(deleteSchema)
+          .reuseContainers()
+          .createReaderFunc(DataReader::create)
+          .build();
+    } else if (format.equals(FileFormat.PARQUET)) {
+      Parquet.ReadBuilder builder = Parquet.read(input)
+          .project(deleteSchema)
+          .reuseContainers()
+          .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(deleteSchema, fileSchema));
 
-      case PARQUET:
-        Parquet.ReadBuilder builder = Parquet.read(input)
-            .project(deleteSchema)
-            .reuseContainers()
-            .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(deleteSchema, fileSchema));
+      if (deleteFile.content() == FileContent.POSITION_DELETES) {
+        builder.filter(Expressions.equal(MetadataColumns.DELETE_FILE_PATH.name(), dataFile.path()));
+      }
 
-        if (deleteFile.content() == FileContent.POSITION_DELETES) {
-          builder.filter(Expressions.equal(MetadataColumns.DELETE_FILE_PATH.name(), dataFile.path()));
-        }
+      return builder.build();
+    } else if (format.equals(FileFormat.ORC)) {
+      // Reusing containers is automatic for ORC. No need to set 'reuseContainers' here.
+      ORC.ReadBuilder orcBuilder = ORC.read(input)
+          .project(deleteSchema)
+          .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(deleteSchema, fileSchema));
 
-        return builder.build();
+      if (deleteFile.content() == FileContent.POSITION_DELETES) {
+        orcBuilder.filter(Expressions.equal(MetadataColumns.DELETE_FILE_PATH.name(), dataFile.path()));
+      }
 
-      case ORC:
-        // Reusing containers is automatic for ORC. No need to set 'reuseContainers' here.
-        ORC.ReadBuilder orcBuilder = ORC.read(input)
-            .project(deleteSchema)
-            .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(deleteSchema, fileSchema));
-
-        if (deleteFile.content() == FileContent.POSITION_DELETES) {
-          orcBuilder.filter(Expressions.equal(MetadataColumns.DELETE_FILE_PATH.name(), dataFile.path()));
-        }
-
-        return orcBuilder.build();
-      default:
-        throw new UnsupportedOperationException(String.format(
-            "Cannot read deletes, %s is not a supported format: %s", deleteFile.format().name(), deleteFile.path()));
+      return orcBuilder.build();
+    } else {
+      throw new UnsupportedOperationException(String.format(
+          "Cannot read deletes, %s is not a supported format: %s", format.name(), deleteFile.path()));
     }
   }
 

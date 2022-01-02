@@ -22,6 +22,7 @@ package org.apache.iceberg.data;
 import java.io.Serializable;
 import java.util.Map;
 import org.apache.iceberg.CombinedScanTask;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.Schema;
@@ -96,47 +97,45 @@ class GenericReader implements Serializable {
     InputFile input = io.newInputFile(task.file().path().toString());
     Map<Integer, ?> partition = PartitionUtil.constantsMap(task, IdentityPartitionConverters::convertConstant);
 
-    switch (task.file().format()) {
-      case AVRO:
-        Avro.ReadBuilder avro = Avro.read(input)
-            .project(fileProjection)
-            .createReaderFunc(
-                avroSchema -> DataReader.create(fileProjection, avroSchema, partition))
-            .split(task.start(), task.length());
+    FileFormat format = task.file().format();
+    if (format.equals(FileFormat.AVRO)) {
+      Avro.ReadBuilder avro = Avro.read(input)
+          .project(fileProjection)
+          .createReaderFunc(
+              avroSchema -> DataReader.create(fileProjection, avroSchema, partition))
+          .split(task.start(), task.length());
 
-        if (reuseContainers) {
-          avro.reuseContainers();
-        }
+      if (reuseContainers) {
+        avro.reuseContainers();
+      }
 
-        return avro.build();
+      return avro.build();
+    } else if (format.equals(FileFormat.PARQUET)) {
+      Parquet.ReadBuilder parquet = Parquet.read(input)
+          .project(fileProjection)
+          .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(fileProjection, fileSchema, partition))
+          .split(task.start(), task.length())
+          .filter(task.residual());
 
-      case PARQUET:
-        Parquet.ReadBuilder parquet = Parquet.read(input)
-            .project(fileProjection)
-            .createReaderFunc(fileSchema -> GenericParquetReaders.buildReader(fileProjection, fileSchema, partition))
-            .split(task.start(), task.length())
-            .filter(task.residual());
+      if (reuseContainers) {
+        parquet.reuseContainers();
+      }
 
-        if (reuseContainers) {
-          parquet.reuseContainers();
-        }
+      return parquet.build();
+    } else if (format.equals(FileFormat.ORC)) {
+      Schema projectionWithoutConstantAndMetadataFields = TypeUtil.selectNot(
+          fileProjection,
+          Sets.union(partition.keySet(), MetadataColumns.metadataFieldIds()));
+      ORC.ReadBuilder orc = ORC.read(input)
+          .project(projectionWithoutConstantAndMetadataFields)
+          .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(fileProjection, fileSchema, partition))
+          .split(task.start(), task.length())
+          .filter(task.residual());
 
-        return parquet.build();
-
-      case ORC:
-        Schema projectionWithoutConstantAndMetadataFields = TypeUtil.selectNot(fileProjection,
-            Sets.union(partition.keySet(), MetadataColumns.metadataFieldIds()));
-        ORC.ReadBuilder orc = ORC.read(input)
-            .project(projectionWithoutConstantAndMetadataFields)
-            .createReaderFunc(fileSchema -> GenericOrcReader.buildReader(fileProjection, fileSchema, partition))
-            .split(task.start(), task.length())
-            .filter(task.residual());
-
-        return orc.build();
-
-      default:
-        throw new UnsupportedOperationException(String.format("Cannot read %s file: %s",
-            task.file().format().name(), task.file().path()));
+      return orc.build();
+    } else {
+      throw new UnsupportedOperationException(String.format("Cannot read %s file: %s",
+          format.name(), task.file().path()));
     }
   }
 

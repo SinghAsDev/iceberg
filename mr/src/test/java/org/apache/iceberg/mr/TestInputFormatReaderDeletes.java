@@ -55,10 +55,10 @@ public class TestInputFormatReaderDeletes extends DeleteReadTests {
     return new Object[][] {
         { "IcebergInputFormat", FileFormat.PARQUET },
         { "IcebergInputFormat", FileFormat.AVRO },
-        { "IcebergInputFormat", FileFormat.ORC },
+        { "IcebergInputFormat", FileFormat.ORC},
         { "MapredIcebergInputFormat", FileFormat.PARQUET },
         { "MapredIcebergInputFormat", FileFormat.AVRO },
-        { "MapredIcebergInputFormat", FileFormat.ORC },
+        { "MapredIcebergInputFormat", FileFormat.ORC},
     };
   }
 
