@@ -610,6 +610,29 @@ public class TestCreateActions extends SparkCatalogTestBase {
     structOfThreeLevelLists(false);
   }
 
+  @Test
+  public void fileFormat() throws Exception {
+    Assume.assumeTrue("Cannot migrate to a hadoop based catalog", !type.equals("hadoop"));
+    Assume.assumeTrue("Can only migrate from Spark Session Catalog", catalog.name().equals("spark_catalog"));
+    String tableName = sourceName("csvFormat");
+    File location = temp.newFolder();
+    sql("CREATE TABLE %s (col1 string, col2 int)" +
+        //" USING CSV" +
+        " STORED AS parquet" +
+        " LOCATION '%s'", tableName, location);
+
+    sql("INSERT INTO %s VALUES (\"key\", 12345)", tableName);
+    List<Object[]> expected = sql(String.format("SELECT * FROM %s", tableName));
+
+    // migrate table
+    SparkActions.get().migrateTable(tableName).execute();
+
+    // check migrated table is returning expected result
+    List<Object[]> results = sql("SELECT * FROM %s", tableName);
+    Assert.assertTrue(results.size() > 0);
+    assertEquals("Output must match", expected, results);
+  }
+
   public void threeLevelList(boolean useLegacyMode) throws Exception {
     spark.conf().set("spark.sql.parquet.writeLegacyFormat", useLegacyMode);
 

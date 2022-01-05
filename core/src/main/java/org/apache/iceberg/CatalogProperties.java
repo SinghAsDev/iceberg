@@ -28,6 +28,7 @@ public class CatalogProperties {
 
   public static final String CATALOG_IMPL = "catalog-impl";
   public static final String FILE_IO_IMPL = "io-impl";
+  public static final String FILE_FORMAT_FACTORY_IMPL = "file-format-factory-impl";
   public static final String WAREHOUSE_LOCATION = "warehouse";
 
   /**

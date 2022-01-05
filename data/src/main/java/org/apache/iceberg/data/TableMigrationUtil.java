@@ -37,6 +37,8 @@ import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.PartitionField;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.avro.Avro;
+import org.apache.iceberg.fileformat.CustomFileFormat;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.hadoop.HadoopInputFile;
 import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.mapping.NameMapping;
@@ -73,7 +75,7 @@ public class TableMigrationUtil {
    */
   public static List<DataFile> listPartition(Map<String, String> partition, String uri, String format,
                                              PartitionSpec spec, Configuration conf, MetricsConfig metricsConfig,
-                                             NameMapping mapping) {
+                                             NameMapping mapping, FileFormatFactory fileFormatFactory) {
     if (format.contains("avro")) {
       return listAvroPartition(partition, uri, spec, conf);
     } else if (format.contains("parquet")) {
@@ -81,7 +83,36 @@ public class TableMigrationUtil {
     } else if (format.contains("orc")) {
       return listOrcPartition(partition, uri, spec, conf, metricsConfig, mapping);
     } else {
-      throw new UnsupportedOperationException("Unknown partition format: " + format);
+      CustomFileFormat fileFormat = fileFormatFactory.get(format);
+      if (fileFormat != null) {
+        try {
+          Path partitionPath = new Path(uri);
+          FileSystem fs = partitionPath.getFileSystem(conf);
+
+          return Arrays.stream(fs.listStatus(partitionPath, HIDDEN_PATH_FILTER))
+              .filter(FileStatus::isFile)
+              .map(stat -> {
+                Metrics metrics = fileFormat.getMetrics(HadoopInputFile.fromStatus(stat, fs));
+                String partitionKey = spec.fields().stream()
+                    .map(PartitionField::name)
+                    .map(name -> String.format("%s=%s", name, partition.get(name)))
+                    .collect(Collectors.joining("/"));
+
+                return DataFiles.builder(spec)
+                    .withPath(stat.getPath().toString())
+                    .withFormat(fileFormat.getFileFormat())
+                    .withFileSizeInBytes(stat.getLen())
+                    .withMetrics(metrics)
+                    .withPartitionPath(partitionKey)
+                    .build();
+
+              }).collect(Collectors.toList());
+        } catch (IOException e) {
+          throw new RuntimeException("Unable to list files in partition: " + uri, e);
+        }
+      } else {
+        throw new UnsupportedOperationException("Unknown partition format: " + format);
+      }
     }
   }
 

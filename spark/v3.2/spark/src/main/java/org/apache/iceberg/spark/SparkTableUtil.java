@@ -43,6 +43,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.common.DynMethods;
 import org.apache.iceberg.data.TableMigrationUtil;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
 import org.apache.iceberg.hadoop.HadoopFileIO;
 import org.apache.iceberg.hadoop.SerializableConfiguration;
 import org.apache.iceberg.hadoop.Util;
@@ -301,7 +302,7 @@ public class SparkTableUtil {
                                              SerializableConfiguration conf, MetricsConfig metricsConfig,
                                              NameMapping mapping) {
     return TableMigrationUtil.listPartition(partition.values, partition.uri, partition.format, spec, conf.get(),
-        metricsConfig, mapping);
+        metricsConfig, mapping, new EmptyFileFormatFactory(Collections.emptyMap()));
   }
 
 
@@ -463,7 +464,8 @@ public class SparkTableUtil {
       NameMapping nameMapping = nameMappingString != null ? NameMappingParser.fromJson(nameMappingString) : null;
 
       List<DataFile> files = TableMigrationUtil.listPartition(
-          partition, Util.uriToString(sourceTable.location()), format.get(), spec, conf, metricsConfig, nameMapping);
+          partition, Util.uriToString(sourceTable.location()), format.get(), spec, conf, metricsConfig, nameMapping,
+          new EmptyFileFormatFactory(Collections.emptyMap()));
 
       if (checkDuplicateFiles) {
         Dataset<Row> importedFiles = spark.createDataset(
