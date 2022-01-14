@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.encryption.EncryptionManager;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -101,6 +102,11 @@ abstract class BaseMetadataTable implements Table, HasTableOperations, Serializa
   @Override
   public LocationProvider locationProvider() {
     return table().locationProvider();
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return table().fileFormatFactory();
   }
 
   @Override

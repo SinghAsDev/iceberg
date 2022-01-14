@@ -22,6 +22,8 @@ package org.apache.iceberg;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.iceberg.exceptions.RuntimeIOException;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
@@ -30,12 +32,14 @@ import org.junit.rules.TemporaryFolder;
 class LocalTableOperations implements TableOperations {
   private final TemporaryFolder temp;
   private final FileIO io;
+  private final FileFormatFactory fileFormatFactory;
 
   private final Map<String, String> createdMetadataFilePaths = Maps.newHashMap();
 
   LocalTableOperations(TemporaryFolder temp) {
     this.temp = temp;
     this.io = new TestTables.LocalFileIO();
+    this.fileFormatFactory = new EmptyFileFormatFactory();
   }
 
   @Override
@@ -77,5 +81,10 @@ class LocalTableOperations implements TableOperations {
   @Override
   public long newSnapshotId() {
     throw new UnsupportedOperationException("Not implemented for tests");
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return fileFormatFactory;
   }
 }

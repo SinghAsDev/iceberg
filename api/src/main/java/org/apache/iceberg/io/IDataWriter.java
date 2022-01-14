@@ -17,8 +17,11 @@
  * under the License.
  */
 
-package org.apache.iceberg.fileformat.write;
+package org.apache.iceberg.io;
 
+import org.apache.iceberg.DataFile;
 
-public interface WriteBuilder {
+public interface IDataWriter<T> extends FileWriter<T, DataWriteResult> {
+
+  DataFile toDataFile();
 }

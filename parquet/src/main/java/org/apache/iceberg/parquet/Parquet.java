@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.Files;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
@@ -113,7 +114,7 @@ public class Parquet {
     private String name = "table";
     private WriteSupport<?> writeSupport = null;
     private Function<MessageType, ParquetValueWriter<?>> createWriterFunc = null;
-    private MetricsConfig metricsConfig = MetricsConfig.getDefault();
+    private IMetricsConfig metricsConfig = MetricsConfig.getDefault();
     private ParquetFileWriter.Mode writeMode = ParquetFileWriter.Mode.CREATE;
     private WriterVersion writerVersion = WriterVersion.PARQUET_1_0;
     private Function<Map<String, String>, Context> createContextFunc = Context::dataContext;
@@ -164,7 +165,7 @@ public class Parquet {
       return this;
     }
 
-    public WriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public WriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       this.metricsConfig = newMetricsConfig;
       return this;
     }
@@ -517,7 +518,7 @@ public class Parquet {
       return this;
     }
 
-    public DeleteWriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public DeleteWriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       appenderBuilder.metricsConfig(newMetricsConfig);
       return this;
     }

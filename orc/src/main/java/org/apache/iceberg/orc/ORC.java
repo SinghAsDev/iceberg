@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
@@ -81,7 +82,7 @@ public class ORC {
     private Schema schema = null;
     private BiFunction<Schema, TypeDescription, OrcRowWriter<?>> createWriterFunc;
     private Map<String, byte[]> metadata = Maps.newHashMap();
-    private MetricsConfig metricsConfig;
+    private IMetricsConfig metricsConfig;
 
     private WriteBuilder(OutputFile file) {
       this.file = file;
@@ -138,7 +139,7 @@ public class ORC {
       return this;
     }
 
-    public WriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public WriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       this.metricsConfig = newMetricsConfig;
       return this;
     }
@@ -298,7 +299,7 @@ public class ORC {
       return this;
     }
 
-    public DeleteWriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public DeleteWriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       appenderBuilder.metricsConfig(newMetricsConfig);
       return this;
     }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.encryption.EncryptionManager;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.hadoop.HadoopConfigurable;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
@@ -60,6 +61,7 @@ public class SerializableTable implements Table, Serializable {
   private final FileIO io;
   private final EncryptionManager encryption;
   private final LocationProvider locationProvider;
+  private final FileFormatFactory fileFormatFactory;
 
   private transient volatile Table lazyTable = null;
   private transient volatile Schema lazySchema = null;
@@ -80,6 +82,7 @@ public class SerializableTable implements Table, Serializable {
     this.io = fileIO(table);
     this.encryption = table.encryption();
     this.locationProvider = table.locationProvider();
+    this.fileFormatFactory = fileFormatFactory(table);
   }
 
   /**
@@ -113,6 +116,14 @@ public class SerializableTable implements Table, Serializable {
     return table.io();
   }
 
+  private FileFormatFactory fileFormatFactory(Table table) {
+    if (table.fileFormatFactory() instanceof HadoopConfigurable) {
+      ((HadoopConfigurable) table.fileFormatFactory()).serializeConfWith(conf -> new SerializableConfiguration(conf)::get);
+    }
+
+    return table.fileFormatFactory();
+  }
+
   private Table lazyTable() {
     if (lazyTable == null) {
       synchronized (this) {
@@ -121,7 +132,7 @@ public class SerializableTable implements Table, Serializable {
             throw new UnsupportedOperationException("Cannot load metadata: metadata file location is null");
           }
 
-          TableOperations ops = new StaticTableOperations(metadataFileLocation, io, locationProvider);
+          TableOperations ops = new StaticTableOperations(metadataFileLocation, io, locationProvider, fileFormatFactory);
           this.lazyTable = newTable(ops, name);
         }
       }
@@ -229,6 +240,11 @@ public class SerializableTable implements Table, Serializable {
   @Override
   public LocationProvider locationProvider() {
     return locationProvider;
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return fileFormatFactory;
   }
 
   @Override

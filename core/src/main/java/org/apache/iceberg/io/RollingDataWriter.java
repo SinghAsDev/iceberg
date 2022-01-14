@@ -30,7 +30,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.Lists;
  * A rolling data writer that splits incoming data into multiple files within one spec/partition
  * based on the target file size.
  */
-public class RollingDataWriter<T> extends RollingFileWriter<T, DataWriter<T>, DataWriteResult> {
+public class RollingDataWriter<T> extends RollingFileWriter<T, IDataWriter<T>, DataWriteResult> {
 
   private final FileWriterFactory<T> writerFactory;
   private final List<DataFile> dataFiles;
@@ -45,7 +45,7 @@ public class RollingDataWriter<T> extends RollingFileWriter<T, DataWriter<T>, Da
   }
 
   @Override
-  protected DataWriter<T> newWriter(EncryptedOutputFile file) {
+  protected IDataWriter<T> newWriter(EncryptedOutputFile file) {
     return writerFactory.newDataWriter(file, spec(), partition());
   }
 

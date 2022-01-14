@@ -17,8 +17,11 @@
  * under the License.
  */
 
-package org.apache.iceberg.fileformat.write;
+package org.apache.iceberg.io;
 
+import org.apache.iceberg.DeleteFile;
 
-public interface WriteBuilder {
+public interface DeleteWriter<T, R> extends FileWriter<T, R> {
+
+  DeleteFile toDeleteFile();
 }

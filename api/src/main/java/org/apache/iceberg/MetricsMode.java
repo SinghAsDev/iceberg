@@ -12,17 +12,23 @@
  * limitations under the License.
  */
 
-package org.apache.iceberg.fileformat;
+package org.apache.iceberg;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.iceberg.exceptions.ValidationException;
+import org.apache.iceberg.relocated.com.google.common.base.Joiner;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
+import org.apache.iceberg.relocated.com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface FileFormatFactory extends Serializable {
-
-  public void initialize(Map<String, String> properties);
-
-  public CustomFileFormat get(String name);
-
-  public Collection<CustomFileFormat> getAll();
+/**
+ * A metrics calculation mode.
+ * <p>
+ * Implementations must be immutable.
+ */
+public interface MetricsMode extends Serializable {
 }

@@ -12,17 +12,13 @@
  * limitations under the License.
  */
 
-package org.apache.iceberg.fileformat;
+package org.apache.iceberg;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
 
-public interface FileFormatFactory extends Serializable {
+public interface IMetricsConfig extends Serializable {
 
-  public void initialize(Map<String, String> properties);
+  void validateReferencedColumns(Schema schema);
 
-  public CustomFileFormat get(String name);
-
-  public Collection<CustomFileFormat> getAll();
+  MetricsMode columnMode(String columnAlias);
 }

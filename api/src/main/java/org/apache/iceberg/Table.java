@@ -22,6 +22,7 @@ package org.apache.iceberg;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.encryption.EncryptionManager;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 
@@ -286,4 +287,9 @@ public interface Table {
    * Returns a {@link LocationProvider} to provide locations for new data files.
    */
   LocationProvider locationProvider();
+
+  /**
+   * Returns a {@link FileFormatFactory}.
+   */
+  FileFormatFactory fileFormatFactory();
 }

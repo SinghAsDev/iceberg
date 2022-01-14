@@ -335,11 +335,11 @@ public abstract class TestFileWriterFactory<T> extends WriterTestBase<T> {
                              PartitionSpec spec, StructLike partitionKey) throws IOException {
 
     EncryptedOutputFile file = newOutputFile(spec, partitionKey);
-    DataWriter<T> writer = writerFactory.newDataWriter(file, spec, partitionKey);
+    IDataWriter<T> writer = writerFactory.newDataWriter(file, spec, partitionKey);
 
-    try (DataWriter<T> closeableWriter = writer) {
+    try (IDataWriter<T> closeableWriter = writer) {
       for (T row : rows) {
-        closeableWriter.add(row);
+        closeableWriter.write(row);
       }
     }
 

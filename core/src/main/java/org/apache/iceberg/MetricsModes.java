@@ -57,14 +57,6 @@ public class MetricsModes {
   }
 
   /**
-   * A metrics calculation mode.
-   * <p>
-   * Implementations must be immutable.
-   */
-  public interface MetricsMode extends Serializable {
-  }
-
-  /**
    * Under this mode, value_counts, null_value_counts, nan_value_counts, lower_bounds, upper_bounds are not persisted.
    */
   public static class None extends ProxySerializableMetricsMode {

@@ -34,7 +34,7 @@ public class MetricsUtil {
    * Construct mapping relationship between column id to NaN value counts from input metrics and metrics config.
    */
   public static Map<Integer, Long> createNanValueCounts(
-      Stream<FieldMetrics<?>> fieldMetrics, MetricsConfig metricsConfig, Schema inputSchema) {
+      Stream<FieldMetrics<?>> fieldMetrics, IMetricsConfig metricsConfig, Schema inputSchema) {
     Preconditions.checkNotNull(metricsConfig, "metricsConfig is required");
 
     if (fieldMetrics == null || inputSchema == null) {
@@ -49,7 +49,7 @@ public class MetricsUtil {
   /**
    * Extract MetricsMode for the given field id from metrics config.
    */
-  public static MetricsModes.MetricsMode metricsMode(Schema inputSchema, MetricsConfig metricsConfig, int fieldId) {
+  public static MetricsMode metricsMode(Schema inputSchema, IMetricsConfig metricsConfig, int fieldId) {
     Preconditions.checkNotNull(inputSchema, "inputSchema is required");
     Preconditions.checkNotNull(metricsConfig, "metricsConfig is required");
 

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,8 @@ import org.apache.iceberg.exceptions.NamespaceNotEmptyException;
 import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.RuntimeIOException;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.CloseableGroup;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.base.Joiner;
@@ -92,6 +95,7 @@ public class HadoopCatalog extends BaseMetastoreCatalog implements Closeable, Su
   private FileIO fileIO;
   private LockManager lockManager;
   private boolean suppressPermissionError = false;
+  private FileFormatFactory fileFormatFactory;
 
   public HadoopCatalog() {
   }
@@ -115,6 +119,10 @@ public class HadoopCatalog extends BaseMetastoreCatalog implements Closeable, Su
     closeableGroup.setSuppressCloseFailure(true);
 
     this.suppressPermissionError = Boolean.parseBoolean(properties.get(HADOOP_SUPPRESS_PERMISSION_ERROR));
+
+    String fileFormatFactoryImpl = properties.get(CatalogProperties.FILE_FORMAT_FACTORY_IMPL);
+    this.fileFormatFactory = fileFormatFactoryImpl == null ? new EmptyFileFormatFactory() :
+        CatalogUtil.loadFileFormatFactory(fileFormatFactoryImpl, properties, conf);
   }
 
   /**
@@ -215,7 +223,7 @@ public class HadoopCatalog extends BaseMetastoreCatalog implements Closeable, Su
 
   @Override
   protected TableOperations newTableOps(TableIdentifier identifier) {
-    return new HadoopTableOperations(new Path(defaultWarehouseLocation(identifier)), fileIO, conf, lockManager);
+    return new HadoopTableOperations(new Path(defaultWarehouseLocation(identifier)), fileIO, conf, lockManager, fileFormatFactory);
   }
 
   @Override

@@ -47,6 +47,8 @@ import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.exceptions.NamespaceNotEmptyException;
 import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.hadoop.HadoopFileIO;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.base.MoreObjects;
@@ -64,6 +66,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
   private Configuration conf;
   private FileIO fileIO;
   private ClientPool<IMetaStoreClient, TException> clients;
+  private FileFormatFactory fileFormatFactory;
 
   public HiveCatalog() {
   }
@@ -88,6 +91,10 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
     this.fileIO = fileIOImpl == null ? new HadoopFileIO(conf) : CatalogUtil.loadFileIO(fileIOImpl, properties, conf);
 
     this.clients = new CachedClientPool(conf, properties);
+
+    String fileFormatFactoryImpl = properties.get(CatalogProperties.FILE_FORMAT_FACTORY_IMPL);
+    this.fileFormatFactory = fileFormatFactoryImpl == null ? new EmptyFileFormatFactory() :
+        CatalogUtil.loadFileFormatFactory(fileFormatFactoryImpl, properties, conf);
   }
 
   @Override
@@ -404,7 +411,7 @@ public class HiveCatalog extends BaseMetastoreCatalog implements SupportsNamespa
   public TableOperations newTableOps(TableIdentifier tableIdentifier) {
     String dbName = tableIdentifier.namespace().level(0);
     String tableName = tableIdentifier.name();
-    return new HiveTableOperations(conf, clients, fileIO, name, dbName, tableName);
+    return new HiveTableOperations(conf, clients, fileIO, name, dbName, tableName, fileFormatFactory);
   }
 
   @Override

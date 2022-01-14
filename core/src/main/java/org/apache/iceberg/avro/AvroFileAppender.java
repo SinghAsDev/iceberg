@@ -26,8 +26,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
-import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.exceptions.RuntimeIOException;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.OutputFile;
@@ -39,14 +39,14 @@ class AvroFileAppender<D> implements FileAppender<D> {
   private DataFileWriter<D> writer = null;
   private DatumWriter<?> datumWriter = null;
   private org.apache.iceberg.Schema icebergSchema;
-  private MetricsConfig metricsConfig;
+  private IMetricsConfig metricsConfig;
   private long numRecords = 0L;
   private boolean isClosed = false;
 
   AvroFileAppender(org.apache.iceberg.Schema icebergSchema, Schema schema, OutputFile file,
                    Function<Schema, DatumWriter<?>> createWriterFunc,
                    CodecFactory codec, Map<String, String> metadata,
-                   MetricsConfig metricsConfig, boolean overwrite) throws IOException {
+                   IMetricsConfig metricsConfig, boolean overwrite) throws IOException {
     this.icebergSchema = icebergSchema;
     this.stream = overwrite ? file.createOrOverwrite() : file.create();
     this.datumWriter = createWriterFunc.apply(schema);

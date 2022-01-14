@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.common.DynClasses;
 import org.apache.iceberg.common.DynConstructors;
 import org.apache.iceberg.common.DynMethods;
 import org.apache.iceberg.exceptions.RuntimeIOException;
 import org.apache.iceberg.exceptions.ValidationException;
-import org.apache.iceberg.fileformat.CustomFileFormat;
 import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
 import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.hadoop.Configurable;
@@ -352,6 +352,7 @@ public class CatalogUtil {
    * {@link EmptyFileFormatFactory#initialize(Map properties)} is called to complete the initialization.
    *
    * @param impl full class name of a custom EmptyFileFormatFactory implementation
+   * @param conf
    * @return EmptyFileFormatFactory class
    * @throws IllegalArgumentException if class path not found or
    *  right constructor not found or
@@ -359,7 +360,7 @@ public class CatalogUtil {
    */
   public static FileFormatFactory loadFileFormatFactory(
       String impl,
-      Map<String, String> properties) {
+      Map<String, String> properties, Configuration conf) {
     LOG.info("Loading custom FileFormatFactory implementation: {}", impl);
     DynConstructors.Ctor<FileFormatFactory> ctor;
     try {
@@ -377,44 +378,9 @@ public class CatalogUtil {
           String.format("Cannot initialize FileFormatFactory, %s does not implement FileFormatFactory.", impl), e);
     }
 
-    // configureHadoopConf(fileFormatFactory, hadoopConf);
+    configureHadoopConf(fileFormatFactory, conf);
 
     fileFormatFactory.initialize(properties);
     return fileFormatFactory;
   }
-
-  // /**
-  //  * Load a {@link CustomFileFormat} implementation.
-  //  * <p>
-  //  * The implementation must have a no-arg constructor.
-  //  *
-  //  * @param impl full class name of a custom FileFormat implementation
-  //  * @return FileFormat class
-  //  * @throws IllegalArgumentException if class path not found or
-  //  *  right constructor not found or
-  //  *  the loaded class cannot be casted to the given interface type
-  //  */
-  // public static CustomFileFormat loadFileFormat(String impl) {
-  //   LOG.info("Loading custom FileFormat implementation: {}", impl);
-  //   DynConstructors.Ctor<CustomFileFormat> ctor;
-  //   try {
-  //     ctor = DynConstructors.builder(org.apache.iceberg.fileformat.FileFormat.class).impl(impl).buildChecked();
-  //   } catch (NoSuchMethodException e) {
-  //     throw new IllegalArgumentException(String.format(
-  //         "Cannot initialize FileFormat, missing no-arg constructor: %s", impl), e);
-  //   }
-  //
-  //   org.apache.iceberg.fileformat.FileFormat fileFormat;
-  //   try {
-  //     fileFormat = ctor.newInstance();
-  //   } catch (ClassCastException e) {
-  //     throw new IllegalArgumentException(
-  //         String.format("Cannot initialize FileFormat, %s does not implement FileFormat.", impl), e);
-  //   }
-  //
-  //   // configureHadoopConf(fileFormat, hadoopConf);
-  //
-  //   // fileFormat.initialize(properties);
-  //   return fileFormat;
-  // }
 }

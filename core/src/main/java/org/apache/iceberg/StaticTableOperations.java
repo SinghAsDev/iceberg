@@ -20,6 +20,8 @@
 
 package org.apache.iceberg;
 
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 
@@ -33,18 +35,21 @@ public class StaticTableOperations implements TableOperations {
   private final String metadataFileLocation;
   private final FileIO io;
   private final LocationProvider locationProvider;
+  private final FileFormatFactory fileFormatFactory;
 
   /**
    * Creates a StaticTableOperations tied to a specific static version of the TableMetadata
    */
   public StaticTableOperations(String metadataFileLocation, FileIO io) {
-    this(metadataFileLocation, io, null);
+    this(metadataFileLocation, io, null, new EmptyFileFormatFactory());
   }
 
-  public StaticTableOperations(String metadataFileLocation, FileIO io, LocationProvider locationProvider) {
+  public StaticTableOperations(String metadataFileLocation, FileIO io, LocationProvider locationProvider,
+      FileFormatFactory fileFormatFactory) {
     this.io = io;
     this.metadataFileLocation = metadataFileLocation;
     this.locationProvider = locationProvider;
+    this.fileFormatFactory = fileFormatFactory;
   }
 
   @Override
@@ -83,5 +88,10 @@ public class StaticTableOperations implements TableOperations {
   @Override
   public LocationProvider locationProvider() {
     return locationProvider;
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return null;
   }
 }

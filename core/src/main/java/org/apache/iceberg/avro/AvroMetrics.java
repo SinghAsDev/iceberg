@@ -20,6 +20,7 @@
 package org.apache.iceberg.avro;
 
 import org.apache.avro.io.DatumWriter;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.Schema;
@@ -30,7 +31,7 @@ public class AvroMetrics {
   }
 
   static Metrics fromWriter(DatumWriter<?> datumWriter, Schema schema, long numRecords,
-                            MetricsConfig inputMetricsConfig) {
+                            IMetricsConfig inputMetricsConfig) {
     // TODO will populate in following PRs if datum writer is a MetricsAwareDatumWriter
     return new Metrics(numRecords, null, null, null, null);
   }

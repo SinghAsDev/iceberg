@@ -124,8 +124,8 @@ abstract class BaseTableCreationSparkAction<ThisT, R> extends BaseSparkAction<Th
 
   private void validateSourceTable() {
     String sourceTableProvider = sourceCatalogTable.provider().get().toLowerCase(Locale.ROOT);
-    Preconditions.checkArgument(ALLOWED_SOURCES.contains(sourceTableProvider),
-        "Cannot create an Iceberg table from source provider: '%s'", sourceTableProvider);
+    // Preconditions.checkArgument(ALLOWED_SOURCES.contains(sourceTableProvider),
+    //     "Cannot create an Iceberg table from source provider: '%s'", sourceTableProvider);
     Preconditions.checkArgument(!sourceCatalogTable.storage().locationUri().isEmpty(),
         "Cannot create an Iceberg table from a source without an explicit location");
   }

@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.encryption.EncryptionManager;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 
@@ -222,6 +223,11 @@ public class BaseTable implements Table, HasTableOperations, Serializable {
   @Override
   public LocationProvider locationProvider() {
     return operations().locationProvider();
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return operations().fileFormatFactory();
   }
 
   @Override

@@ -61,6 +61,7 @@ import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.NoSuchIcebergTableException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.hadoop.ConfigProperties;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
@@ -149,9 +150,11 @@ public class HiveTableOperations extends BaseMetastoreTableOperations {
   private final int metadataRefreshMaxRetries;
   private final FileIO fileIO;
   private final ClientPool<IMetaStoreClient, TException> metaClients;
+  private final FileFormatFactory fileFormatFactory;
 
   protected HiveTableOperations(Configuration conf, ClientPool metaClients, FileIO fileIO,
-                                String catalogName, String database, String table) {
+                                String catalogName, String database, String table,
+                                FileFormatFactory fileFormatFactory) {
     this.conf = conf;
     this.metaClients = metaClients;
     this.fileIO = fileIO;
@@ -169,6 +172,7 @@ public class HiveTableOperations extends BaseMetastoreTableOperations {
     long tableLevelLockCacheEvictionTimeout =
         conf.getLong(HIVE_TABLE_LEVEL_LOCK_EVICT_MS, HIVE_TABLE_LEVEL_LOCK_EVICT_MS_DEFAULT);
     initTableLevelLockCache(tableLevelLockCacheEvictionTimeout);
+    this.fileFormatFactory = fileFormatFactory;
   }
 
   @Override
@@ -302,6 +306,11 @@ public class HiveTableOperations extends BaseMetastoreTableOperations {
     } finally {
       cleanupMetadataAndUnlock(commitStatus, newMetadataLocation, lockId, tableLevelMutex);
     }
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return fileFormatFactory;
   }
 
   @VisibleForTesting

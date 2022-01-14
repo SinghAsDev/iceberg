@@ -143,7 +143,7 @@ public class SparkCatalog extends BaseCatalog {
   public SparkTable createTable(Identifier ident, StructType schema,
                                 Transform[] transforms,
                                 Map<String, String> properties) throws TableAlreadyExistsException {
-    Schema icebergSchema = SparkSchemaUtil.convert(schema, useTimestampsWithoutZone);
+    Schema icebergSchema = convert(schema, properties);
     try {
       Catalog.TableBuilder builder = newBuilder(ident, icebergSchema);
       Table icebergTable = builder
@@ -160,7 +160,7 @@ public class SparkCatalog extends BaseCatalog {
   @Override
   public StagedTable stageCreate(Identifier ident, StructType schema, Transform[] transforms,
                                  Map<String, String> properties) throws TableAlreadyExistsException {
-    Schema icebergSchema = SparkSchemaUtil.convert(schema, useTimestampsWithoutZone);
+    Schema icebergSchema = convert(schema, properties);
     try {
       Catalog.TableBuilder builder = newBuilder(ident, icebergSchema);
       Transaction transaction = builder.withPartitionSpec(Spark3Util.toPartitionSpec(icebergSchema, transforms))
@@ -176,7 +176,7 @@ public class SparkCatalog extends BaseCatalog {
   @Override
   public StagedTable stageReplace(Identifier ident, StructType schema, Transform[] transforms,
                                   Map<String, String> properties) throws NoSuchTableException {
-    Schema icebergSchema = SparkSchemaUtil.convert(schema, useTimestampsWithoutZone);
+    Schema icebergSchema = convert(schema, properties);
     try {
       Catalog.TableBuilder builder = newBuilder(ident, icebergSchema);
       Transaction transaction = builder.withPartitionSpec(Spark3Util.toPartitionSpec(icebergSchema, transforms))
@@ -192,7 +192,7 @@ public class SparkCatalog extends BaseCatalog {
   @Override
   public StagedTable stageCreateOrReplace(Identifier ident, StructType schema, Transform[] transforms,
                                           Map<String, String> properties) {
-    Schema icebergSchema = SparkSchemaUtil.convert(schema, useTimestampsWithoutZone);
+    Schema icebergSchema = convert(schema, properties);
     Catalog.TableBuilder builder = newBuilder(ident, icebergSchema);
     Transaction transaction = builder.withPartitionSpec(Spark3Util.toPartitionSpec(icebergSchema, transforms))
         .withLocation(properties.get("location"))
@@ -430,6 +430,10 @@ public class SparkCatalog extends BaseCatalog {
   @Override
   public String name() {
     return catalogName;
+  }
+
+  protected Schema convert(StructType schema, Map<String, String> properties) {
+    return SparkSchemaUtil.convert(schema, useTimestampsWithoutZone);
   }
 
   private static void commitChanges(Table table, SetProperty setLocation, SetProperty setSnapshotId,

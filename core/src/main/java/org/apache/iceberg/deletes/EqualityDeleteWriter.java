@@ -29,11 +29,12 @@ import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.StructLike;
 import org.apache.iceberg.encryption.EncryptionKeyMetadata;
 import org.apache.iceberg.io.DeleteWriteResult;
+import org.apache.iceberg.io.DeleteWriter;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.FileWriter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
-public class EqualityDeleteWriter<T> implements FileWriter<T, DeleteWriteResult> {
+public class EqualityDeleteWriter<T> implements DeleteWriter<T, DeleteWriteResult> {
   private final FileAppender<T> appender;
   private final FileFormat format;
   private final String location;

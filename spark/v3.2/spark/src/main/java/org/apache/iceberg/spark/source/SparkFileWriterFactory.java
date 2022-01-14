@@ -27,6 +27,7 @@ import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.avro.Avro;
 import org.apache.iceberg.data.BaseFileWriterFactory;
+import org.apache.iceberg.fileformat.write.DataWriteBuilder;
 import org.apache.iceberg.io.DeleteSchemaUtil;
 import org.apache.iceberg.orc.ORC;
 import org.apache.iceberg.parquet.Parquet;
@@ -119,6 +120,11 @@ class SparkFileWriterFactory extends BaseFileWriterFactory<InternalRow> {
   protected void configurePositionDelete(ORC.DeleteWriteBuilder builder) {
     builder.createWriterFunc(SparkOrcWriter::new);
     builder.transformPaths(path -> UTF8String.fromString(path.toString()));
+  }
+
+  @Override
+  protected void configureDataWrite(DataWriteBuilder builder) {
+    // builder.createWriterFunc(SparkOrcWriter::new);
   }
 
   private StructType dataSparkType() {

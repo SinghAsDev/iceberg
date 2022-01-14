@@ -32,10 +32,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.FieldMetrics;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
+import org.apache.iceberg.MetricsMode;
 import org.apache.iceberg.MetricsModes;
-import org.apache.iceberg.MetricsModes.MetricsMode;
 import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.exceptions.RuntimeIOException;
@@ -94,7 +95,7 @@ public class OrcMetrics {
     }
   }
 
-  static Metrics fromWriter(Writer writer, Stream<FieldMetrics<?>> fieldMetricsStream, MetricsConfig metricsConfig) {
+  static Metrics fromWriter(Writer writer, Stream<FieldMetrics<?>> fieldMetricsStream, IMetricsConfig metricsConfig) {
     try {
       return buildOrcMetrics(writer.getNumberOfRows(), writer.getSchema(), writer.getStatistics(),
           fieldMetricsStream, metricsConfig, null);
@@ -106,12 +107,12 @@ public class OrcMetrics {
   private static Metrics buildOrcMetrics(final long numOfRows, final TypeDescription orcSchema,
                                          final ColumnStatistics[] colStats,
                                          final Stream<FieldMetrics<?>> fieldMetricsStream,
-                                         final MetricsConfig metricsConfig,
+                                         final IMetricsConfig metricsConfig,
                                          final NameMapping mapping) {
     final TypeDescription orcSchemaWithIds = (!ORCSchemaUtil.hasIds(orcSchema) && mapping != null) ?
         ORCSchemaUtil.applyNameMapping(orcSchema, mapping) : orcSchema;
     final Set<Integer> statsColumns = statsColumns(orcSchemaWithIds);
-    final MetricsConfig effectiveMetricsConfig = Optional.ofNullable(metricsConfig)
+    final IMetricsConfig effectiveMetricsConfig = Optional.ofNullable(metricsConfig)
         .orElseGet(MetricsConfig::getDefault);
     Map<Integer, Long> columnSizes = Maps.newHashMapWithExpectedSize(colStats.length);
     Map<Integer, Long> valueCounts = Maps.newHashMapWithExpectedSize(colStats.length);

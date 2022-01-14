@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
 import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
@@ -34,8 +35,9 @@ import org.apache.iceberg.deletes.EqualityDeleteWriter;
 import org.apache.iceberg.deletes.PositionDeleteWriter;
 import org.apache.iceberg.encryption.EncryptedOutputFile;
 import org.apache.iceberg.encryption.EncryptionKeyMetadata;
-import org.apache.iceberg.io.DataWriter;
+import org.apache.iceberg.fileformat.write.DataWriteBuilder;
 import org.apache.iceberg.io.FileWriterFactory;
+import org.apache.iceberg.io.IDataWriter;
 import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.orc.ORC;
 import org.apache.iceberg.parquet.Parquet;
@@ -81,8 +83,12 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
   protected abstract void configureEqualityDelete(ORC.DeleteWriteBuilder builder);
   protected abstract void configurePositionDelete(ORC.DeleteWriteBuilder builder);
 
+  protected abstract void configureDataWrite(DataWriteBuilder builder);
+  // protected abstract void configureEqualityDelete(DeleteWriteBuilder builder);
+  // protected abstract void configurePositionDelete(DeleteWriteBuilder builder);
+
   @Override
-  public DataWriter<T> newDataWriter(EncryptedOutputFile file, PartitionSpec spec, StructLike partition) {
+  public IDataWriter<T> newDataWriter(EncryptedOutputFile file, PartitionSpec spec, StructLike partition) {
     OutputFile outputFile = file.encryptingOutputFile();
     EncryptionKeyMetadata keyMetadata = file.keyMetadata();
     Map<String, String> properties = table.properties();
@@ -131,6 +137,20 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
         configureDataWrite(orcBuilder);
 
         return orcBuilder.build();
+      } else if (dataFileFormat != null) {
+        DataWriteBuilder writeBuilder = dataFileFormat.getCustomFileFormat().writeData(outputFile)
+            .schema(dataSchema)
+            .setAll(properties)
+            .metricsConfig(metricsConfig)
+            .withSpec(spec)
+            .withPartition(partition)
+            .withKeyMetadata(keyMetadata)
+            .withSortOrder(dataSortOrder)
+            .overwrite();
+
+        configureDataWrite(writeBuilder);
+
+        return writeBuilder.build();
       } else {
         throw new UnsupportedOperationException("Unsupported data file format: " + dataFileFormat);
       }
@@ -208,7 +228,7 @@ public abstract class BaseFileWriterFactory<T> implements FileWriterFactory<T> {
     OutputFile outputFile = file.encryptingOutputFile();
     EncryptionKeyMetadata keyMetadata = file.keyMetadata();
     Map<String, String> properties = table.properties();
-    MetricsConfig metricsConfig = MetricsConfig.forPositionDelete(table);
+    IMetricsConfig metricsConfig = MetricsConfig.forPositionDelete(table);
 
     try {
       if (deleteFileFormat.equals(FileFormat.AVRO)) {

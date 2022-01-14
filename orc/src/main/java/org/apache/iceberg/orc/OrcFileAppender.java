@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.Schema;
@@ -54,12 +55,12 @@ class OrcFileAppender<D> implements FileAppender<D> {
   private final OrcRowWriter<D> valueWriter;
   private boolean isClosed = false;
   private final Configuration conf;
-  private final MetricsConfig metricsConfig;
+  private final IMetricsConfig metricsConfig;
 
   OrcFileAppender(Schema schema, OutputFile file,
                   BiFunction<Schema, TypeDescription, OrcRowWriter<?>> createWriterFunc,
                   Configuration conf, Map<String, byte[]> metadata,
-                  int batchSize, MetricsConfig metricsConfig) {
+                  int batchSize, IMetricsConfig metricsConfig) {
     this.conf = conf;
     this.file = file;
     this.batchSize = batchSize;

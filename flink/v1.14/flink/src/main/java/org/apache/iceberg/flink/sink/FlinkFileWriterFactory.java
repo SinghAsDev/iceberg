@@ -31,6 +31,7 @@ import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.avro.Avro;
 import org.apache.iceberg.data.BaseFileWriterFactory;
+import org.apache.iceberg.fileformat.write.DataWriteBuilder;
 import org.apache.iceberg.flink.FlinkSchemaUtil;
 import org.apache.iceberg.flink.data.FlinkAvroWriter;
 import org.apache.iceberg.flink.data.FlinkOrcWriter;
@@ -118,6 +119,11 @@ class FlinkFileWriterFactory extends BaseFileWriterFactory<RowData> implements S
   protected void configurePositionDelete(ORC.DeleteWriteBuilder builder) {
     builder.createWriterFunc((iSchema, typDesc) -> FlinkOrcWriter.buildWriter(positionDeleteFlinkType(), iSchema));
     builder.transformPaths(path -> StringData.fromString(path.toString()));
+  }
+
+  @Override
+  protected void configureDataWrite(DataWriteBuilder builder) {
+    // builder.createWriterFunc((iSchema, typDesc) -> FlinkOrcWriter.buildWriter(dataFlinkType(), iSchema));
   }
 
   private RowType dataFlinkType() {

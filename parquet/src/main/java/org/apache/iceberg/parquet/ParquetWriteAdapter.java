@@ -22,6 +22,7 @@ package org.apache.iceberg.parquet;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.exceptions.RuntimeIOException;
@@ -38,10 +39,10 @@ import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 @Deprecated
 public class ParquetWriteAdapter<D> implements FileAppender<D> {
   private ParquetWriter<D> writer;
-  private MetricsConfig metricsConfig;
+  private IMetricsConfig metricsConfig;
   private ParquetMetadata footer;
 
-  public ParquetWriteAdapter(ParquetWriter<D> writer, MetricsConfig metricsConfig) {
+  public ParquetWriteAdapter(ParquetWriter<D> writer, IMetricsConfig metricsConfig) {
     this.writer = writer;
     this.metricsConfig = metricsConfig;
   }

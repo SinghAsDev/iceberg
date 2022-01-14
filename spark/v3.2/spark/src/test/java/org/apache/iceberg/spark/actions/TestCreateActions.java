@@ -617,8 +617,8 @@ public class TestCreateActions extends SparkCatalogTestBase {
     String tableName = sourceName("csvFormat");
     File location = temp.newFolder();
     sql("CREATE TABLE %s (col1 string, col2 int)" +
-        //" USING CSV" +
-        " STORED AS parquet" +
+        " USING CSV" +
+        // " STORED AS parquet" +
         " LOCATION '%s'", tableName, location);
 
     sql("INSERT INTO %s VALUES (\"key\", 12345)", tableName);

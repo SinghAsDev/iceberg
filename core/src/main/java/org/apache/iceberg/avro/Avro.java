@@ -40,6 +40,7 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.specific.SpecificData;
 import org.apache.iceberg.FieldMetrics;
 import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.SchemaParser;
@@ -108,7 +109,7 @@ public class Avro {
     private String name = "table";
     private Function<Schema, DatumWriter<?>> createWriterFunc = null;
     private boolean overwrite;
-    private MetricsConfig metricsConfig;
+    private IMetricsConfig metricsConfig;
     private Function<Map<String, String>, Context> createContextFunc = Context::dataContext;
 
     private WriteBuilder(OutputFile file) {
@@ -157,7 +158,7 @@ public class Avro {
       return this;
     }
 
-    public WriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public WriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       this.metricsConfig = newMetricsConfig;
       return this;
     }
@@ -387,7 +388,7 @@ public class Avro {
       return this;
     }
 
-    public DeleteWriteBuilder metricsConfig(MetricsConfig newMetricsConfig) {
+    public DeleteWriteBuilder metricsConfig(IMetricsConfig newMetricsConfig) {
       appenderBuilder.metricsConfig(newMetricsConfig);
       return this;
     }

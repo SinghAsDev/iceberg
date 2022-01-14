@@ -129,12 +129,12 @@ public abstract class TestWriterMetrics<T> {
   @Test
   public void verifySortedColMetric() throws Exception {
     T row = toRow(3, "3", true, 3L);
-    DataWriter dataWriter = newWriterFactory(SCHEMA).newDataWriter(
+    IDataWriter dataWriter = newWriterFactory(SCHEMA).newDataWriter(
         fileFactory.newOutputFile(),
         PartitionSpec.unpartitioned(),
         null
     );
-    dataWriter.add(row);
+    dataWriter.write(row);
     dataWriter.close();
     DataFile dataFile = dataWriter.toDataFile();
 

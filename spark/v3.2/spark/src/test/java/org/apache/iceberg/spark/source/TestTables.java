@@ -32,6 +32,8 @@ import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.exceptions.AlreadyExistsException;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.RuntimeIOException;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.io.LocationProvider;
@@ -181,6 +183,11 @@ class TestTables {
       long nextSnapshotId = lastSnapshotId + 1;
       this.lastSnapshotId = nextSnapshotId;
       return nextSnapshotId;
+    }
+
+    @Override
+    public FileFormatFactory fileFormatFactory() {
+      return new EmptyFileFormatFactory();
     }
   }
 

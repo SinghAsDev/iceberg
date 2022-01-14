@@ -29,6 +29,7 @@ import org.apache.iceberg.encryption.EncryptionManager;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
@@ -504,6 +505,11 @@ class BaseTransaction implements Transaction {
     public long newSnapshotId() {
       return tempOps.newSnapshotId();
     }
+
+    @Override
+    public FileFormatFactory fileFormatFactory() {
+      return tempOps.fileFormatFactory();
+    }
   }
 
   public class TransactionTable implements Table, HasTableOperations, Serializable {
@@ -685,6 +691,11 @@ class BaseTransaction implements Transaction {
     @Override
     public LocationProvider locationProvider() {
       return transactionOps.locationProvider();
+    }
+
+    @Override
+    public FileFormatFactory fileFormatFactory() {
+      return transactionOps.fileFormatFactory();
     }
 
     @Override

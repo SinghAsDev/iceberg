@@ -121,7 +121,13 @@ public class SparkWriteConf {
         .tableProperty(TableProperties.DEFAULT_FILE_FORMAT)
         .defaultValue(TableProperties.DEFAULT_FILE_FORMAT_DEFAULT)
         .parse();
-    return FileFormat.valueOf(valueAsString.toUpperCase(Locale.ENGLISH));
+    FileFormat fileFormat = FileFormat.valueOf(valueAsString.toUpperCase(Locale.ENGLISH));
+
+    if (fileFormat == null && table.fileFormatFactory() != null) {
+      fileFormat = table.fileFormatFactory().get(valueAsString).getFileFormat();
+    }
+
+    return fileFormat;
   }
 
   public long targetDataFileSize() {

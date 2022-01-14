@@ -22,6 +22,7 @@ package org.apache.iceberg;
 import java.util.UUID;
 import org.apache.iceberg.encryption.EncryptionManager;
 import org.apache.iceberg.encryption.PlaintextEncryptionManager;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 
@@ -119,5 +120,10 @@ public interface TableOperations {
     long leastSignificantBits = uuid.getLeastSignificantBits();
     return (mostSignificantBits ^ leastSignificantBits) & Long.MAX_VALUE;
   }
+
+  /**
+   * Returns a FileFormatFactory
+   */
+  FileFormatFactory fileFormatFactory();
 
 }

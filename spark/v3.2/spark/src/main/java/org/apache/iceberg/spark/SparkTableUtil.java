@@ -302,7 +302,7 @@ public class SparkTableUtil {
                                              SerializableConfiguration conf, MetricsConfig metricsConfig,
                                              NameMapping mapping) {
     return TableMigrationUtil.listPartition(partition.values, partition.uri, partition.format, spec, conf.get(),
-        metricsConfig, mapping, new EmptyFileFormatFactory(Collections.emptyMap()));
+        metricsConfig, mapping, new EmptyFileFormatFactory());
   }
 
 
@@ -465,7 +465,7 @@ public class SparkTableUtil {
 
       List<DataFile> files = TableMigrationUtil.listPartition(
           partition, Util.uriToString(sourceTable.location()), format.get(), spec, conf, metricsConfig, nameMapping,
-          new EmptyFileFormatFactory(Collections.emptyMap()));
+          targetTable.fileFormatFactory());
 
       if (checkDuplicateFiles) {
         Dataset<Row> importedFiles = spark.createDataset(

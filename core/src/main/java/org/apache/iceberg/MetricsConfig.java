@@ -19,12 +19,10 @@
 
 package org.apache.iceberg;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.concurrent.Immutable;
-import org.apache.iceberg.MetricsModes.MetricsMode;
 import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.relocated.com.google.common.base.Joiner;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -39,7 +37,7 @@ import static org.apache.iceberg.TableProperties.DEFAULT_WRITE_METRICS_MODE_DEFA
 import static org.apache.iceberg.TableProperties.METRICS_MODE_COLUMN_CONF_PREFIX;
 
 @Immutable
-public final class MetricsConfig implements Serializable {
+public final class MetricsConfig implements IMetricsConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsConfig.class);
   private static final Joiner DOT = Joiner.on('.');
@@ -176,6 +174,7 @@ public final class MetricsConfig implements Serializable {
     }
   }
 
+  @Override
   public void validateReferencedColumns(Schema schema) {
     for (String column : columnModes.keySet()) {
       ValidationException.check(
@@ -185,6 +184,7 @@ public final class MetricsConfig implements Serializable {
     }
   }
 
+  @Override
   public MetricsMode columnMode(String columnAlias) {
     return columnModes.getOrDefault(columnAlias, defaultMode);
   }

@@ -42,6 +42,7 @@ import org.apache.iceberg.encryption.EncryptionManager;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.RuntimeIOException;
 import org.apache.iceberg.exceptions.ValidationException;
+import org.apache.iceberg.fileformat.FileFormatFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
@@ -65,16 +66,19 @@ public class HadoopTableOperations implements TableOperations {
   private final Path location;
   private final FileIO fileIO;
   private final LockManager lockManager;
+  private final FileFormatFactory fileFormatFactory;
 
   private volatile TableMetadata currentMetadata = null;
   private volatile Integer version = null;
   private volatile boolean shouldRefresh = true;
 
-  protected HadoopTableOperations(Path location, FileIO fileIO, Configuration conf, LockManager lockManager) {
+  protected HadoopTableOperations(Path location, FileIO fileIO, Configuration conf, LockManager lockManager,
+      FileFormatFactory fileFormatFactory) {
     this.conf = conf;
     this.location = location;
     this.fileIO = fileIO;
     this.lockManager = lockManager;
+    this.fileFormatFactory = fileFormatFactory;
   }
 
   @Override
@@ -222,7 +226,17 @@ public class HadoopTableOperations implements TableOperations {
       public long newSnapshotId() {
         return HadoopTableOperations.this.newSnapshotId();
       }
+
+      @Override
+      public FileFormatFactory fileFormatFactory() {
+        return HadoopTableOperations.this.fileFormatFactory();
+      }
     };
+  }
+
+  @Override
+  public FileFormatFactory fileFormatFactory() {
+    return null;
   }
 
   @VisibleForTesting

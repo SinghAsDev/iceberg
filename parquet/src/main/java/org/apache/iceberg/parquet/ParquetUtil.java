@@ -30,10 +30,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.iceberg.FieldMetrics;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
+import org.apache.iceberg.MetricsMode;
 import org.apache.iceberg.MetricsModes;
-import org.apache.iceberg.MetricsModes.MetricsMode;
 import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.exceptions.RuntimeIOException;
@@ -83,13 +84,13 @@ public class ParquetUtil {
   }
 
   public static Metrics footerMetrics(ParquetMetadata metadata, Stream<FieldMetrics<?>> fieldMetrics,
-                                      MetricsConfig metricsConfig) {
+                                      IMetricsConfig metricsConfig) {
     return footerMetrics(metadata, fieldMetrics, metricsConfig, null);
   }
 
   @SuppressWarnings("checkstyle:CyclomaticComplexity")
   public static Metrics footerMetrics(ParquetMetadata metadata, Stream<FieldMetrics<?>> fieldMetrics,
-                                      MetricsConfig metricsConfig, NameMapping nameMapping) {
+                                      IMetricsConfig metricsConfig, NameMapping nameMapping) {
     Preconditions.checkNotNull(fieldMetrics, "fieldMetrics should not be null");
 
     long rowCount = 0;
@@ -166,7 +167,7 @@ public class ParquetUtil {
   }
 
   private static void updateFromFieldMetrics(
-      Map<Integer, FieldMetrics<?>> idToFieldMetricsMap, MetricsConfig metricsConfig, Schema schema,
+      Map<Integer, FieldMetrics<?>> idToFieldMetricsMap, IMetricsConfig metricsConfig, Schema schema,
       Map<Integer, Literal<?>> lowerBounds, Map<Integer, Literal<?>> upperBounds) {
     idToFieldMetricsMap.entrySet().forEach(entry -> {
       int fieldId = entry.getKey();

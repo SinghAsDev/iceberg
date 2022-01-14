@@ -19,5 +19,43 @@
 
 package org.apache.iceberg.fileformat.write;
 
-public class DataWriteBuilder {
+import java.util.Map;
+import java.util.function.BiFunction;
+import org.apache.iceberg.IMetricsConfig;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.SortOrder;
+import org.apache.iceberg.StructLike;
+import org.apache.iceberg.Table;
+import org.apache.iceberg.encryption.EncryptionKeyMetadata;
+import org.apache.iceberg.io.IDataWriter;
+
+public interface DataWriteBuilder extends WriteBuilder {
+  DataWriteBuilder forTable(Table table);
+
+  DataWriteBuilder schema(Schema newSchema);
+
+  DataWriteBuilder set(String property, String value);
+
+  DataWriteBuilder setAll(Map<String, String> properties);
+
+  DataWriteBuilder meta(String property, String value);
+
+  DataWriteBuilder overwrite();
+
+  DataWriteBuilder overwrite(boolean enabled);
+
+  DataWriteBuilder metricsConfig(IMetricsConfig newMetricsConfig);
+
+  DataWriteBuilder createWriterFunc(BiFunction writerFunction);
+
+  DataWriteBuilder withSpec(PartitionSpec newSpec);
+
+  DataWriteBuilder withPartition(StructLike newPartition);
+
+  DataWriteBuilder withKeyMetadata(EncryptionKeyMetadata metadata);
+
+  DataWriteBuilder withSortOrder(SortOrder newSortOrder);
+
+  <T> IDataWriter<T> build();
 }

@@ -44,6 +44,7 @@ import org.apache.iceberg.Transactions;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.exceptions.AlreadyExistsException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
+import org.apache.iceberg.fileformat.EmptyFileFormatFactory;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -205,7 +206,7 @@ public class HadoopTables implements Tables, Configurable {
       return new StaticTableOperations(location, new HadoopFileIO(conf));
     } else {
       return new HadoopTableOperations(new Path(location), new HadoopFileIO(conf), conf,
-          createOrGetLockManager(this));
+          createOrGetLockManager(this), new EmptyFileFormatFactory());
     }
   }
 

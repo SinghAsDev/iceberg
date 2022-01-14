@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.iceberg.fileformat.CustomFileFormat;
 import org.apache.iceberg.types.Comparators;
 
 /**
@@ -32,10 +33,10 @@ import org.apache.iceberg.types.Comparators;
  */
 @SuppressWarnings({"checkstyle:VisibilityModifier", "checkstyle:StaticVariableName"})
 public class FileFormat implements Serializable {
-  public static FileFormat ORC = new FileFormat("ORC", "orc", true);
-  public static FileFormat PARQUET = new FileFormat("PARQUET", "parquet", true);
-  public static FileFormat AVRO = new FileFormat("AVRO", "avro", true);
-  public static FileFormat METADATA = new FileFormat("METADATA", "metadata.json", false);
+  public static FileFormat ORC = new FileFormat("ORC", "orc", true, null);
+  public static FileFormat PARQUET = new FileFormat("PARQUET", "parquet", true, null);
+  public static FileFormat AVRO = new FileFormat("AVRO", "avro", true, null);
+  public static FileFormat METADATA = new FileFormat("METADATA", "metadata.json", false, null);
 
   private static final Map<String, FileFormat> inbuiltFormats = Stream.of(
       ORC,
@@ -47,11 +48,17 @@ public class FileFormat implements Serializable {
   private final String name;
   private final String ext;
   private final boolean splittable;
+  private final CustomFileFormat customFileFormat;
 
-  public FileFormat(String name, String ext, boolean splittable) {
+  public FileFormat(
+      String name,
+      String ext,
+      boolean splittable,
+      CustomFileFormat customFileFormat) {
     this.name = name;
     this.ext = "." + ext;
     this.splittable = splittable;
+    this.customFileFormat = customFileFormat;
   }
 
   public static FileFormat valueOf(String name) {
@@ -111,5 +118,9 @@ public class FileFormat implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(name, ext, splittable);
+  }
+
+  public CustomFileFormat getCustomFileFormat() {
+    return customFileFormat;
   }
 }

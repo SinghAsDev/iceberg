@@ -80,9 +80,9 @@ public abstract class WriterTestBase<T> extends TableTestBase {
                                List<T> rows, PartitionSpec spec, StructLike partitionKey) throws IOException {
 
     EncryptedOutputFile file = fileFactory.newOutputFile(spec, partitionKey);
-    DataWriter<T> writer = writerFactory.newDataWriter(file, spec, partitionKey);
+    IDataWriter<T> writer = writerFactory.newDataWriter(file, spec, partitionKey);
 
-    try (DataWriter<T> closeableWriter = writer) {
+    try (IDataWriter<T> closeableWriter = writer) {
       for (T row : rows) {
         closeableWriter.write(row);
       }

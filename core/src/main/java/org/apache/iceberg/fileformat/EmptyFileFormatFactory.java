@@ -25,6 +25,10 @@ import java.util.Map;
 
 public class EmptyFileFormatFactory implements FileFormatFactory {
 
+  public EmptyFileFormatFactory() {
+    initialize(Collections.EMPTY_MAP);
+  }
+
   public EmptyFileFormatFactory(Map<String, String> properties) {
     initialize(properties);
   }

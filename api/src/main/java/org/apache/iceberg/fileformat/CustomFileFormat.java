@@ -16,6 +16,7 @@ package org.apache.iceberg.fileformat;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
 import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.Metrics;
@@ -27,9 +28,9 @@ import org.apache.iceberg.fileformat.write.WriteBuilder;
 import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.io.OutputFile;
 
-public interface CustomFileFormat {
+public interface CustomFileFormat extends Serializable {
   default FileFormat getFileFormat() {
-    return new FileFormat("", "", true);
+    return new FileFormat(name(), ext(), isSplittable(), this);
   }
   String name();
   String ext();
@@ -42,7 +43,7 @@ public interface CustomFileFormat {
 
   DeleteWriteBuilder writeDeletes(OutputFile file);
 
-  ReadBuilder read(InputFile file);
+  <T> ReadBuilder<T> read(InputFile file);
 
   long rowCount(InputFile file);
 

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.iceberg.IMetricsConfig;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
 import org.apache.iceberg.Schema;
@@ -67,7 +68,7 @@ class ParquetWriter<T> implements FileAppender<T>, Closeable {
   private final MessageType parquetSchema;
   private final ParquetValueWriter<T> model;
   private final ParquetFileWriter writer;
-  private final MetricsConfig metricsConfig;
+  private final IMetricsConfig metricsConfig;
   private final int columnIndexTruncateLength;
 
   private DynMethods.BoundMethod flushPageStoreToWriter;
@@ -86,7 +87,7 @@ class ParquetWriter<T> implements FileAppender<T>, Closeable {
                 Function<MessageType, ParquetValueWriter<?>> createWriterFunc,
                 CompressionCodecName codec,
                 ParquetProperties properties,
-                MetricsConfig metricsConfig,
+                IMetricsConfig metricsConfig,
                 ParquetFileWriter.Mode writeMode) {
     this.targetRowGroupSize = rowGroupSize;
     this.props = properties;

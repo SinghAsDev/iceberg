@@ -38,7 +38,7 @@ public interface FileWriterFactory<T> {
    * @param partition the partition written data belongs to or null if the spec is unpartitioned
    * @return the constructed data writer
    */
-  DataWriter<T> newDataWriter(EncryptedOutputFile file, PartitionSpec spec, StructLike partition);
+  IDataWriter<T> newDataWriter(EncryptedOutputFile file, PartitionSpec spec, StructLike partition);
 
   /**
    * Creates a new {@link EqualityDeleteWriter}.
