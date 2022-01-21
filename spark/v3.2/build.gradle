@@ -43,7 +43,7 @@ project(':iceberg-spark:iceberg-spark-3.2_2.12') {
 
   sourceSets {
     main {
-      scala.srcDirs = ['src/main/scala', 'src/main/java']
+      scala.srcDirs = ['src/main/scala', 'src/main/java', 'src/test/scala']
       java.srcDirs = []
     }
   }

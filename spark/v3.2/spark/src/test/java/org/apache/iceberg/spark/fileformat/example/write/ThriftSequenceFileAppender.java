@@ -17,11 +17,10 @@ package org.apache.iceberg.spark.fileformat.example.write;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.BiFunction;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -34,6 +33,8 @@ import org.apache.iceberg.hadoop.HadoopOutputFile;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.io.PositionOutputStream;
+import org.apache.iceberg.spark.fileformat.example.schema.SparkNativeThriftSerDe;
+import org.apache.iceberg.spark.fileformat.example.schema.ThriftSerDeOptions;
 import org.apache.spark.sql.catalyst.InternalRow;
 
 public class ThriftSequenceFileAppender<T> implements FileAppender<T>, Closeable {
@@ -86,7 +87,13 @@ public class ThriftSequenceFileAppender<T> implements FileAppender<T>, Closeable
     byte[] bytes;
     if (datum instanceof InternalRow) {
       //bytes = "dqwfwffasfsdfdsfsfawfwfwefwefwefwefqwF3FASFDASwe, fqwfwefewfwe".getBytes(StandardCharsets.UTF_8);
-      bytes = ThriftSerializer.serialize(tClass, (InternalRow) datum);
+      SparkNativeThriftSerDe serde = new SparkNativeThriftSerDe();
+      serde.initialize(
+          tClass,
+          new ThriftSerDeOptions(false, true, false, false),
+          new Properties());
+
+      bytes = serde.serialize((InternalRow) datum, false);
     } else {
       throw new UnsupportedOperationException(String.format("Writing data of type %s is not supported by %s.",
           datum.getClass().getName(), this.getClass().getName()));

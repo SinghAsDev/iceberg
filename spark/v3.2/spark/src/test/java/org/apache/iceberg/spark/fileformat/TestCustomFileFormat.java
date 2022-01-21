@@ -22,26 +22,28 @@ package org.apache.iceberg.spark.fileformat;
 import com.twitter.data.proto.tutorial.thrift.AddressBook;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.hadoop.hive.serde2.thrift.test.MyEnum;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.spark.SparkCatalogTestBase;
-import org.apache.iceberg.spark.actions.SparkActions;
 import org.apache.iceberg.spark.fileformat.example.MiniStruct;
+import org.apache.iceberg.spark.fileformat.example.schema.SparkNativeThriftSerDe;
+import org.apache.iceberg.spark.fileformat.example.schema.ThriftSerDeOptions;
 import org.apache.iceberg.spark.fileformat.example.schema.ThriftTypeToType;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.Types;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.connector.catalog.TableCatalog;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -136,7 +138,7 @@ public class TestCustomFileFormat extends SparkCatalogTestBase {
   }
 
   @Test
-  public void testReadWrite() throws IOException {
+  public void testReadWrite() throws IOException, TException {
     String tableName = sourceName("testReadWrite");
     File location = temp.newFolder();
 
@@ -146,53 +148,72 @@ public class TestCustomFileFormat extends SparkCatalogTestBase {
         " TBLPROPERTIES ('write.format.default' = 'thrift_sequencefile'," +
         "                'thrift_type' = '%s')", tableName, location, MiniStruct.class.getName());
 
-    sql("INSERT INTO %s VALUES ('test string one', 'LLAMA')", tableName);
+    String testString = "test string one";
+    MyEnum testEnum = MyEnum.LLAMA;
+    sql("INSERT INTO %s VALUES ('" + testString + "', '" + testEnum.name() + "')", tableName);
+
+    JavaRDD<Tuple2<NullWritable, BytesWritable>> keyValue =
+        spark.sparkContext().sequenceFile(location.getPath() + "/data", NullWritable.class, BytesWritable.class).toJavaRDD();
+    byte[] actualBytes = keyValue.map(Tuple2::_2).map(BytesWritable::getBytes).collect().get(0);
+
+    MiniStruct miniStruct = new MiniStruct();
+    miniStruct.setMy_string(testString);
+    miniStruct.setMy_enum(testEnum);
+
+    // byte[] expectedBytes = new TSerializer().serialize(miniStruct);
+
+    TDeserializer tDeserializer = new TDeserializer();
+    MiniStruct reconstructedMiniStruct = new MiniStruct();
+    tDeserializer.deserialize(reconstructedMiniStruct, actualBytes);
+
+    Assert.assertEquals(testString, reconstructedMiniStruct.getMy_string());
+    Assert.assertEquals(testEnum, reconstructedMiniStruct.getMy_enum());
 
     List<Object[]> expected = sql(String.format("SELECT * FROM %s", tableName));
   }
 
-  @Test
-  public void testCustomFileFormat() throws Exception {
-    Assume.assumeTrue("Can only migrate from Spark Session Catalog", catalog.name().equals("spark_catalog"));
-
-    MiniStruct miniStruct1 = new MiniStruct();
-    miniStruct1.setMy_string("test string one");
-    miniStruct1.setMy_enum(MyEnum.LLAMA);
-
-    MiniStruct miniStruct2 = new MiniStruct();
-    miniStruct2.setMy_string("test string two");
-    miniStruct2.setMy_enum(MyEnum.ALPACA);
-
-    File location = temp.newFolder();
-
-    TSerializer tSerializer = new TSerializer();
-    String seqFilePath = String.format("%s/%s", location.getPath(), "testCustomFileFormat");
-    JavaSparkContext.fromSparkContext(spark.sparkContext()).parallelize(
-        Arrays.asList(
-            tSerializer.serialize(miniStruct1),
-            tSerializer.serialize(miniStruct2)), 1)
-        .saveAsObjectFile(seqFilePath);
-
-    RDD<Tuple2<NullWritable, BytesWritable>> tuple2RDD =
-        spark.sparkContext().sequenceFile(seqFilePath, NullWritable.class, BytesWritable.class);
-
-    String tableName = sourceName("testCustomFileFormat");
-
-    sql("CREATE TABLE %s (col1 binary)" +
-        " USING SEQUENCEFILE" +
-        // " STORED AS parquet" +
-        " LOCATION '%s'", tableName, seqFilePath);
-
-    List<Object[]> expected = sql(String.format("SELECT * FROM %s", tableName));
-
-    // migrate table
-    SparkActions.get().migrateTable(tableName).execute();
-
-    // check migrated table is returning expected result
-    List<Object[]> results = sql("SELECT * FROM %s", tableName);
-    Assert.assertTrue(results.size() > 0);
-    assertEquals("Output must match", expected, results);
-  }
+  // @Test
+  // public void testCustomFileFormat() throws Exception {
+  //   Assume.assumeTrue("Can only migrate from Spark Session Catalog", catalog.name().equals("spark_catalog"));
+  //
+  //   MiniStruct miniStruct1 = new MiniStruct();
+  //   miniStruct1.setMy_string("test string one");
+  //   miniStruct1.setMy_enum(MyEnum.LLAMA);
+  //
+  //   MiniStruct miniStruct2 = new MiniStruct();
+  //   miniStruct2.setMy_string("test string two");
+  //   miniStruct2.setMy_enum(MyEnum.ALPACA);
+  //
+  //   File location = temp.newFolder();
+  //
+  //   TSerializer tSerializer = new TSerializer();
+  //   String seqFilePath = String.format("%s/%s", location.getPath(), "testCustomFileFormat");
+  //   JavaSparkContext.fromSparkContext(spark.sparkContext()).parallelize(
+  //       Arrays.asList(
+  //           tSerializer.serialize(miniStruct1),
+  //           tSerializer.serialize(miniStruct2)), 1)
+  //       .saveAsObjectFile(seqFilePath);
+  //
+  //   RDD<Tuple2<NullWritable, BytesWritable>> tuple2RDD =
+  //       spark.sparkContext().sequenceFile(seqFilePath, NullWritable.class, BytesWritable.class);
+  //
+  //   String tableName = sourceName("testCustomFileFormat");
+  //
+  //   sql("CREATE TABLE %s (col1 binary)" +
+  //       " USING SEQUENCEFILE" +
+  //       // " STORED AS parquet" +
+  //       " LOCATION '%s'", tableName, seqFilePath);
+  //
+  //   List<Object[]> expected = sql(String.format("SELECT * FROM %s", tableName));
+  //
+  //   // migrate table
+  //   SparkActions.get().migrateTable(tableName).execute();
+  //
+  //   // check migrated table is returning expected result
+  //   List<Object[]> results = sql("SELECT * FROM %s", tableName);
+  //   Assert.assertTrue(results.size() > 0);
+  //   assertEquals("Output must match", expected, results);
+  // }
 
   private String sourceName(String source) {
     return NAMESPACE + "." + catalog.name() + "_" + type + "_" + source;
