@@ -116,6 +116,8 @@ public class BaseDeleteOrphanFilesSparkAction
   private String location = null;
   private long olderThanTimestamp = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(3);
   private Dataset<Row> compareToFileList;
+  private String regexReplacePattern;
+  private String regexReplaceReplacement;
   private Consumer<String> deleteFunc = defaultDelete;
   private ExecutorService deleteExecutorService = null;
 
@@ -182,6 +184,12 @@ public class BaseDeleteOrphanFilesSparkAction
     return this;
   }
 
+  public BaseDeleteOrphanFilesSparkAction withRegexReplace(String pattern, String replacement) {
+    this.regexReplacePattern = pattern;
+    this.regexReplaceReplacement = replacement;
+    return this;
+  }
+
   private Dataset<Row> filteredCompareToFileList() {
     Dataset<Row> files = compareToFileList;
     if (location != null) {
@@ -216,7 +224,16 @@ public class BaseDeleteOrphanFilesSparkAction
     Column actualFileName = filenameUDF.apply(actualFileDF.col(FILE_PATH));
     Column validFileName = filenameUDF.apply(validFileDF.col(FILE_PATH));
     Column nameEqual = actualFileName.equalTo(validFileName);
-    Column actualContains = actualFileDF.col(FILE_PATH).contains(validFileDF.col(FILE_PATH));
+    Column updatedActualFilesColumn = actualFileDF.col(FILE_PATH);
+    Column updatedValidFilesColumn = validFileDF.col(FILE_PATH);
+
+    if (this.regexReplacePattern != null && this.regexReplaceReplacement != null) {
+      updatedActualFilesColumn = functions.regexp_replace(updatedActualFilesColumn,
+          this.regexReplacePattern, this.regexReplaceReplacement);
+      updatedValidFilesColumn = functions.regexp_replace(updatedValidFilesColumn,
+          this.regexReplacePattern, this.regexReplaceReplacement);
+    }
+    Column actualContains = updatedActualFilesColumn.contains(updatedValidFilesColumn);
     Column joinCond = nameEqual.and(actualContains);
     List<String> orphanFiles = actualFileDF.join(validFileDF, joinCond, "leftanti")
         .as(Encoders.STRING())
@@ -232,7 +249,8 @@ public class BaseDeleteOrphanFilesSparkAction
     return new BaseDeleteOrphanFilesActionResult(orphanFiles);
   }
 
-  private Dataset<Row> buildActualFileDF() {
+  @VisibleForTesting
+  Dataset<Row> buildActualFileDF() {
     List<String> subDirs = Lists.newArrayList();
     List<String> matchingFiles = Lists.newArrayList();
 

@@ -19,16 +19,20 @@
 
 package org.apache.iceberg.spark.procedures;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.actions.DeleteOrphanFiles;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
+import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.spark.actions.BaseDeleteOrphanFilesSparkAction;
 import org.apache.iceberg.spark.actions.SparkActions;
 import org.apache.iceberg.spark.procedures.SparkProcedures.ProcedureBuilder;
 import org.apache.iceberg.util.DateTimeUtil;
 import org.apache.spark.sql.catalyst.InternalRow;
+import org.apache.spark.sql.catalyst.util.MapData;
 import org.apache.spark.sql.connector.catalog.Identifier;
 import org.apache.spark.sql.connector.catalog.TableCatalog;
 import org.apache.spark.sql.connector.iceberg.catalog.ProcedureParameter;
@@ -37,6 +41,8 @@ import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.unsafe.types.UTF8String;
+import scala.collection.IndexedSeq;
+import scala.runtime.BoxedUnit;
 
 /**
  * A procedure that removes orphan files in a table.
@@ -45,13 +51,15 @@ import org.apache.spark.unsafe.types.UTF8String;
  */
 public class RemoveOrphanFilesProcedure extends BaseProcedure {
 
-  private static final ProcedureParameter[] PARAMETERS = new ProcedureParameter[]{
+  private static final ProcedureParameter[] PARAMETERS = new ProcedureParameter[] {
       ProcedureParameter.required("table", DataTypes.StringType),
       ProcedureParameter.optional("older_than", DataTypes.TimestampType),
       ProcedureParameter.optional("location", DataTypes.StringType),
       ProcedureParameter.optional("dry_run", DataTypes.BooleanType),
       ProcedureParameter.optional("max_concurrent_deletes", DataTypes.IntegerType),
-      ProcedureParameter.optional("file_list_view", DataTypes.StringType)
+      ProcedureParameter.optional("file_list_view", DataTypes.StringType),
+      ProcedureParameter
+          .optional("regex_replace", DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType))
   };
 
   private static final StructType OUTPUT_TYPE = new StructType(new StructField[]{
@@ -90,6 +98,16 @@ public class RemoveOrphanFilesProcedure extends BaseProcedure {
     boolean dryRun = args.isNullAt(3) ? false : args.getBoolean(3);
     Integer maxConcurrentDeletes = args.isNullAt(4) ? null : args.getInt(4);
     String fileListView = args.isNullAt(5) ? null : args.getString(5);
+    Map<String, String> regexReplaceParams = Maps.newHashMap();
+    if (!args.isNullAt(6)) {
+      args.getMap(6).foreach(DataTypes.StringType, DataTypes.StringType,
+          (k, v) -> {
+            regexReplaceParams.put(k.toString(), v.toString());
+            return BoxedUnit.UNIT;
+          });
+    }
+    String regexReplacePattern = regexReplaceParams.get("pattern");
+    String regexReplaceReplacement = regexReplaceParams.get("replacement");
 
     Preconditions.checkArgument(maxConcurrentDeletes == null || maxConcurrentDeletes > 0,
             "max_concurrent_deletes should have value > 0,  value: " + maxConcurrentDeletes);
@@ -119,6 +137,10 @@ public class RemoveOrphanFilesProcedure extends BaseProcedure {
 
       if (fileListView != null) {
         ((BaseDeleteOrphanFilesSparkAction) action).compareToFileList(spark().table(fileListView));
+      }
+
+      if (regexReplacePattern != null && regexReplaceReplacement != null) {
+        ((BaseDeleteOrphanFilesSparkAction) action).withRegexReplace(regexReplacePattern, regexReplaceReplacement);
       }
 
       DeleteOrphanFiles.Result result = action.execute();
